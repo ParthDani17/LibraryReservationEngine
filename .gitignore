@@ -1,0 +1,51 @@
+# Build results
+bin/
+obj/
+out/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# EF Core
+**/Migrations/*.Designer.cs.bak
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+
+# Publish output
+**/PublishProfiles/*.pubxml
+publish/
+
+# Rider/VS temp
+*.DotSettings.user
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / secrets (never commit these)
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+*.env
