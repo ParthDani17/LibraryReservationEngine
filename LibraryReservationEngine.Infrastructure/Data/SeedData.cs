@@ -1,6 +1,7 @@
 ﻿using LibraryReservationEngine.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryReservationEngine.Infrastructure.Data
 {

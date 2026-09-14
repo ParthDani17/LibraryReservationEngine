@@ -27,7 +27,7 @@ namespace LibraryReservationEngine.Web.Controllers
         // post /Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -36,7 +36,7 @@ namespace LibraryReservationEngine.Web.Controllers
 
             var user = new ApplicationUser
             {
-                FullName = model.Fullname,
+                FullName = model.FullName,
                 UserName = model.Email,
                 Email = model.Email
             };
