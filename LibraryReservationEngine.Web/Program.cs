@@ -2,6 +2,8 @@ using LibraryReservationEngine.Infrastructure.Data;
 using LibraryReservationEngine.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using LibraryReservationEngine.Application.Interfaces;
+using LibraryReservationEngine.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 
 // This means Use Application user is my UserType and IdentityRole is for role and store that data in my ApplicationDbContxt.
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
 
