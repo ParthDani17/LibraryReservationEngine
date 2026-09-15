@@ -56,6 +56,8 @@ namespace LibraryReservationEngine.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(r => r.BookCopyId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Fine>().Property(f => f.Amount).HasPrecision(10, 2);
         }
     }
 }

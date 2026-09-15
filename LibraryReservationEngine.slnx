@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LibraryReservationEngine.Application/LibraryReservationEngine.Application.csproj" />
+  <Project Path="LibraryReservationEngine.Domain/LibraryReservationEngine.Domain.csproj" />
+  <Project Path="LibraryReservationEngine.Infrastructure/LibraryReservationEngine.Infrastructure.csproj" />
+  <Project Path="LibraryReservationEngine.Web/LibraryReservationEngine.Web.csproj" />
+</Solution>
