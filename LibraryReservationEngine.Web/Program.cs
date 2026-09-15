@@ -15,6 +15,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IBookCopyService, BookCopyService>();
+builder.Services.AddScoped<BookCopyService>();
 
 var app = builder.Build();
 
