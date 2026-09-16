@@ -12,5 +12,8 @@
         <li>@copy.CopyCode — @copy.Status</li>
     }
 </ul>
-
+@if (User.IsInRole("Librarian"))
+{
+    <a asp-controller="BookCopy" asp-action="Index" asp-route-bookId="@Model.Id">Manage Copies</a>
+}
 <a asp-action="Index">Back to list</a>
