@@ -7,5 +7,7 @@ namespace LibraryReservationEngine.Application.Interfaces
         Task<Result> CreateReservationAsync(string userId, int bookId);
         Task<Result> CancelReservationAsync(int reservationId, string userId);
         Task<IEnumerable<ReservationSummaryDto>> GetMyReservationsAsync(string userId);
+        Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsAsync();
+        Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsForBookAsync(int bookId);
     }
 }

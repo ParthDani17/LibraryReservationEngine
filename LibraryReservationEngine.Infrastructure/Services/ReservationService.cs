@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Application.Common;
+using LibraryReservationEngine.Application.Common;
 using LibraryReservationEngine.Application.Interfaces;
 using LibraryReservationEngine.Domain.Entities;
 using LibraryReservationEngine.Domain.Enums;
@@ -105,13 +105,62 @@ namespace LibraryReservationEngine.Infrastructure.Services
         public async Task<IEnumerable<ReservationSummaryDto>> GetMyReservationsAsync(string userId)
         {
             return await _context.Reservations
+                .AsNoTracking()
                 .Where(r => r.UserId == userId)
                 .Include(r => r.Book)
+                .Include(r => r.BookCopy)
                 .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new ReservationSummaryDto
                 {
                     Id = r.Id,
-                    BookTitle = r.Book!.Title,
+                    BookTitle = r.Book != null ? r.Book.Title : "Unknown Title",
+                    CopyCode = r.BookCopy != null ? r.BookCopy.CopyCode : "-",
+                    Status = r.Status.ToString(),
+                    CreatedAt = r.CreatedAt,
+                    ExpiresAt = r.ExpiresAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsAsync()
+        {
+            return await _context.Reservations
+                .AsNoTracking()
+                .Where(r => r.Status == ReservationStatus.Active)
+                .Include(r => r.User)
+                .Include(r => r.Book)
+                .Include(r => r.BookCopy)
+                .OrderBy(r => r.ExpiresAt)
+                .Select(r => new ReservationSummaryDto
+                {
+                    Id = r.Id,
+                    MemberName = r.User != null ? r.User.FullName : "Unknown",
+                    MemberEmail = r.User != null ? r.User.Email ?? "" : "",
+                    BookTitle = r.Book != null ? r.Book.Title : "Unknown Title",
+                    CopyCode = r.BookCopy != null ? r.BookCopy.CopyCode : "-",
+                    Status = r.Status.ToString(),
+                    CreatedAt = r.CreatedAt,
+                    ExpiresAt = r.ExpiresAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsForBookAsync(int bookId)
+        {
+            return await _context.Reservations
+                .AsNoTracking()
+                .Where(r => r.BookId == bookId && r.Status == ReservationStatus.Active)
+                .Include(r => r.User)
+                .Include(r => r.Book)
+                .Include(r => r.BookCopy)
+                .OrderBy(r => r.ExpiresAt)
+                .Select(r => new ReservationSummaryDto
+                {
+                    Id = r.Id,
+                    MemberName = r.User != null ? r.User.FullName : "Unknown",
+                    MemberEmail = r.User != null ? r.User.Email ?? "" : "",
+                    BookTitle = r.Book != null ? r.Book.Title : "Unknown Title",
+                    CopyCode = r.BookCopy != null ? r.BookCopy.CopyCode : "-",
                     Status = r.Status.ToString(),
                     CreatedAt = r.CreatedAt,
                     ExpiresAt = r.ExpiresAt

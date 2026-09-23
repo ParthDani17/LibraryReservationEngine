@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -11,46 +11,64 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <span class="navbar-text me-3" style="margin: auto">
-                    Hello, @User.Identity.Name
-                </span>
-
-                <form asp-controller="Account"
-                      asp-action="Logout"
-                      method="post"
-                      class="d-inline">
-                    @Html.AntiForgeryToken()
-
-                    <button type="submit"
-                            class="btn btn-dark me-4">
-                        Logout
-                    </button>
-                </form>
-
-                <li class="nav-item">
-                    <a class="nav-link text-dark" asp-controller="Reservation" asp-action="MyReservations">My Reservations</a>
-                </li>
-            }
-            else
-            {
-                <a class="nav-link me-4" style="margin: auto"
-                   asp-controller="Account"
-                   asp-action="Login">
-                    Login
-                </a>
-
-                <a class="btn btn-secondary me-4"
-                   asp-controller="Account"
-                   asp-action="Register">
-                    Register
-                </a>
-            }
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-controller="Book" asp-action="Index">Books</a>
-            </li>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">Library Reservation</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Book" asp-action="Index">Books</a>
+                        </li>
+                        @if (User.IsInRole("Librarian"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Reservation" asp-action="Index">Active Reservations</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="Index">All Borrowings</a>
+                            </li>
+                        }
+                        else if (User.IsInRole("Member"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Reservation" asp-action="MyReservations">My Reservations</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="MyBorrowings">My Borrowings</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav align-items-center">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item me-3">
+                                <span class="navbar-text">
+                                    Hello, <strong>@User.Identity.Name</strong>
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-dark btn-sm">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item ms-2">
+                                <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Register</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
         </nav>
     </header>
     <div class="container">

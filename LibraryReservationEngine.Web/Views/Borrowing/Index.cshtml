@@ -1,0 +1,105 @@
+@model IEnumerable<LibraryReservationEngine.Application.Common.BorrowingSummaryDto>
+
+@{
+    ViewData["Title"] = "All Student Borrowings";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>All Student Borrowings</h2>
+            <p class="text-muted mb-0">Librarian overview: track all active, overdue, and returned books across all members.</p>
+        </div>
+        <a asp-controller="Reservation" asp-action="Index" class="btn btn-outline-primary">Active Reservations Queue</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h5 class="alert-heading">No Borrowing Records</h5>
+            <p class="mb-0">There are currently no borrowing records in the library database.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student / Member</th>
+                                <th>Book Title</th>
+                                <th>Copy Code</th>
+                                <th>Issued On</th>
+                                <th>Due Date</th>
+                                <th>Returned On</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@item.MemberName</div>
+                                        <small class="text-muted">@item.MemberEmail</small>
+                                    </td>
+                                    <td class="fw-semibold">@item.BookTitle</td>
+                                    <td><code>@item.CopyCode</code></td>
+                                    <td>@item.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <span class="@(item.Status == "Active" && item.DueDate < DateTime.UtcNow ? "text-danger fw-bold" : "")">
+                                            @item.DueDate.ToLocalTime().ToString("MMM dd, yyyy")
+                                        </span>
+                                    </td>
+                                    <td>@(item.ReturnedAt.HasValue ? item.ReturnedAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")</td>
+                                    <td>
+                                        @switch (item.Status)
+                                        {
+                                            case "Active":
+                                                if (item.DueDate < DateTime.UtcNow)
+                                                {
+                                                    <span class="badge bg-danger">Overdue</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-primary">Active</span>
+                                                }
+                                                break;
+                                            case "Returned":
+                                                <span class="badge bg-success">Returned</span>
+                                                break;
+                                            case "Overdue":
+                                                <span class="badge bg-danger">Overdue</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@item.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
