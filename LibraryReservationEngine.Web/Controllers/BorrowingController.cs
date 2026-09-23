@@ -15,6 +15,15 @@ namespace LibraryReservationEngine.Web.Controllers
             _borrowingService = borrowingService;
         }
 
+        // GET: /Borrowing (Librarian: view borrowings of all students)
+        [HttpGet]
+        [Authorize(Roles = "Librarian")]
+        public async Task<IActionResult> Index()
+        {
+            var borrowings = await _borrowingService.GetAllBorrowingsAsync();
+            return View(borrowings);
+        }
+
         // POST: /Borrowing/Issue
         [HttpPost]
         [Authorize(Roles = "Librarian")]
@@ -37,7 +46,7 @@ namespace LibraryReservationEngine.Web.Controllers
                 return Redirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "Book");
+            return RedirectToAction("Index", "Reservation");
         }
 
         // GET: /Borrowing/MyBorrowings

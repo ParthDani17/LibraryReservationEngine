@@ -1,0 +1,93 @@
+@model IEnumerable<LibraryReservationEngine.Application.Common.ReservationSummaryDto>
+
+@{
+    ViewData["Title"] = "Active Reservations (Ready for Issue)";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Active Reservations Queue</h2>
+            <p class="text-muted mb-0">Librarian management: issue ready physical copies to student reservation owners.</p>
+        </div>
+        <a asp-controller="Borrowing" asp-action="Index" class="btn btn-outline-primary">View All Borrowings</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h5 class="alert-heading">No Active Reservations</h5>
+            <p class="mb-0">There are currently no active reservations waiting to be issued.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student / Member</th>
+                                <th>Book Title</th>
+                                <th>Copy Code</th>
+                                <th>Reserved On</th>
+                                <th>Expires On</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@item.MemberName</div>
+                                        <small class="text-muted">@item.MemberEmail</small>
+                                    </td>
+                                    <td class="fw-semibold">@item.BookTitle</td>
+                                    <td><code>@item.CopyCode</code></td>
+                                    <td>@item.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="@(item.ExpiresAt.HasValue && item.ExpiresAt.Value < DateTime.UtcNow ? "text-danger fw-bold" : "")">
+                                            @(item.ExpiresAt.HasValue ? item.ExpiresAt.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm") : "—")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">Ready for Pickup</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form asp-controller="Borrowing" asp-action="Issue" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="reservationId" value="@item.Id" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="bi bi-box-arrow-right"></i> Issue Book
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

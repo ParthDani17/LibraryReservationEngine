@@ -8,5 +8,6 @@ namespace LibraryReservationEngine.Application.Interfaces
     {
         Task<Result> IssueBookAsync(int reservationId);
         Task<IEnumerable<BorrowingSummaryDto>> GetMyBorrowingsAsync(string userId);
+        Task<IEnumerable<BorrowingSummaryDto>> GetAllBorrowingsAsync();
     }
 }

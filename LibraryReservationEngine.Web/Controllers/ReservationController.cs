@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Application.Interfaces;
+using LibraryReservationEngine.Application.Interfaces;
 using LibraryReservationEngine.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,8 +19,18 @@ namespace LibraryReservationEngine.Web.Controllers
             _userManager = userManager;
         }
 
+        // GET /Reservation (Librarian active reservation queue)
+        [HttpGet]
+        [Authorize(Roles = "Librarian")]
+        public async Task<IActionResult> Index()
+        {
+            var reservations = await _reservationService.GetActiveReservationsAsync();
+            return View(reservations);
+        }
+
         // POST /Reservation/Create
         [HttpPost]
+        [Authorize(Roles = "Member")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(int bookId)
         {

@@ -133,6 +133,31 @@ namespace LibraryReservationEngine.Infrastructure.Services
                 .Select(b => new BorrowingSummaryDto
                 {
                     Id = b.Id,
+                    MemberName = b.User != null ? b.User.FullName : "Unknown",
+                    MemberEmail = b.User != null ? b.User.Email ?? "" : "",
+                    BookTitle = b.BookCopy != null && b.BookCopy.Book != null ? b.BookCopy.Book.Title : "Unknown Title",
+                    CopyCode = b.BookCopy != null ? b.BookCopy.CopyCode : "Unknown Code",
+                    IssuedAt = b.IssuedAt,
+                    DueDate = b.DueDate,
+                    ReturnedAt = b.ReturnedAt,
+                    Status = b.Status.ToString()
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<BorrowingSummaryDto>> GetAllBorrowingsAsync()
+        {
+            return await _context.Borrowings
+                .AsNoTracking()
+                .Include(b => b.User)
+                .Include(b => b.BookCopy)
+                    .ThenInclude(c => c!.Book)
+                .OrderByDescending(b => b.IssuedAt)
+                .Select(b => new BorrowingSummaryDto
+                {
+                    Id = b.Id,
+                    MemberName = b.User != null ? b.User.FullName : "Unknown",
+                    MemberEmail = b.User != null ? b.User.Email ?? "" : "",
                     BookTitle = b.BookCopy != null && b.BookCopy.Book != null ? b.BookCopy.Book.Title : "Unknown Title",
                     CopyCode = b.BookCopy != null ? b.BookCopy.CopyCode : "Unknown Code",
                     IssuedAt = b.IssuedAt,

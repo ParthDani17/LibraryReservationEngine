@@ -1,39 +1,174 @@
-﻿@model LibraryReservationEngine.Domain.Entities.Book
+@model LibraryReservationEngine.Domain.Entities.Book
+@inject LibraryReservationEngine.Application.Interfaces.IReservationService ReservationService
 
-<h2>@Model.Title</h2>
-<p><strong>Author:</strong> @Model.Author?.Name</p>
-<p><strong>Category:</strong> @Model.Category?.Name</p>
-<p><strong>ISBN:</strong> @Model.ISBN</p>
-@if (User.Identity?.IsAuthenticated == true)
-{
-    <form asp-controller="Reservation" asp-action="Create" method="post" style="display:inline">
-        <input type="hidden" name="bookId" value="@Model.Id" />
-        <button type="submit">Reserve this Book</button>
-    </form>
-}
-else
-{
-    <p><a asp-controller="Account" asp-action="Login">Log in</a> to reserve this book.</p>
+@{
+    ViewData["Title"] = Model.Title;
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@Model.Title</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">&larr; Back to Catalogue</a>
+    </div>
 
-<h4>Copies</h4>
-<ul>
-    @foreach (var copy in Model.BookCopies)
+    @if (TempData["Success"] != null)
     {
-        <li>@copy.CopyCode — @copy.Status</li>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     }
-</ul>
-@if (User.IsInRole("Librarian"))
-{
-    <a asp-controller="BookCopy" asp-action="Index" asp-route-bookId="@Model.Id">Manage Copies</a>
-}
-<a asp-action="Index">Back to list</a>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-muted mb-3">Book Metadata</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Author:</dt>
+                        <dd class="col-sm-9 fw-semibold">@(Model.Author?.Name ?? "Unknown")</dd>
+
+                        <dt class="col-sm-3">Category:</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info text-dark">@(Model.Category?.Name ?? "General")</span></dd>
+
+                        <dt class="col-sm-3">ISBN:</dt>
+                        <dd class="col-sm-9"><code>@Model.ISBN</code></dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                    @if (User.IsInRole("Member"))
+                    {
+                        <form asp-controller="Reservation" asp-action="Create" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="bookId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-bookmark-plus"></i> Reserve this Book
+                            </button>
+                        </form>
+                    }
+                    else if (User.IsInRole("Librarian"))
+                    {
+                        <span class="badge bg-secondary p-2">Librarian mode: reserve is restricted to students</span>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-muted">
+                            <a asp-controller="Account" asp-action="Login" class="text-decoration-none fw-semibold">Log in as a student</a> to reserve this book.
+                        </p>
+                    }
+                </div>
+            </div>
+
+            @if (User.IsInRole("Librarian"))
+            {
+                var activeReservations = await ReservationService.GetActiveReservationsForBookAsync(Model.Id);
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-warning bg-opacity-25 fw-semibold d-flex justify-content-between align-items-center">
+                        <span>Active Student Reservations (@activeReservations.Count())</span>
+                        <a asp-controller="Reservation" asp-action="Index" class="btn btn-sm btn-outline-dark">View All Queue</a>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (!activeReservations.Any())
+                        {
+                            <div class="p-3 text-muted">No active student holds for this book.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Copy Code</th>
+                                            <th>Hold Expires</th>
+                                            <th class="text-end">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var res in activeReservations)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">@res.MemberName</div>
+                                                    <small class="text-muted">@res.MemberEmail</small>
+                                                </td>
+                                                <td><code>@res.CopyCode</code></td>
+                                                <td>@(res.ExpiresAt.HasValue ? res.ExpiresAt.Value.ToLocalTime().ToString("MMM dd, HH:mm") : "—")</td>
+                                                <td class="text-end">
+                                                    <form asp-controller="Borrowing" asp-action="Issue" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="reservationId" value="@res.Id" />
+                                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                            Issue Book
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Physical Copies</h5>
+                    @if (User.IsInRole("Librarian"))
+                    {
+                        <a asp-controller="BookCopy" asp-action="Index" asp-route-bookId="@Model.Id" class="btn btn-outline-primary btn-sm">
+                            Manage Copies
+                        </a>
+                    }
+                </div>
+                <div class="card-body p-0">
+                    @if (!Model.BookCopies.Any())
+                    {
+                        <div class="p-3 text-muted">No physical copies registered for this title.</div>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var copy in Model.BookCopies)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <code>@copy.CopyCode</code>
+                                    @switch (copy.Status)
+                                    {
+                                        case LibraryReservationEngine.Domain.Enums.BookCopyStatus.Available:
+                                            <span class="badge bg-success">Available</span>
+                                            break;
+                                        case LibraryReservationEngine.Domain.Enums.BookCopyStatus.Reserved:
+                                            <span class="badge bg-warning text-dark">Reserved</span>
+                                            break;
+                                        case LibraryReservationEngine.Domain.Enums.BookCopyStatus.Borrowed:
+                                            <span class="badge bg-primary">Borrowed</span>
+                                            break;
+                                        case LibraryReservationEngine.Domain.Enums.BookCopyStatus.Maintenance:
+                                            <span class="badge bg-secondary">Maintenance</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-dark">@copy.Status</span>
+                                            break;
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
