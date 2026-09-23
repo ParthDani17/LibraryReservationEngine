@@ -11,13 +11,19 @@ namespace LibraryReservationEngine.Infrastructure.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IBookCopyService _bookCopyService;
+        private readonly IWaitlistService _waitlistService;
+        private readonly IFineService _fineService;
 
         public BorrowingService(
             ApplicationDbContext context,
-            IBookCopyService bookCopyService)
+            IBookCopyService bookCopyService,
+            IWaitlistService waitlistService,
+            IFineService fineService)
         {
             _context = context;
             _bookCopyService = bookCopyService;
+            _waitlistService = waitlistService;
+            _fineService = fineService;
         }
 
         public async Task<Result> IssueBookAsync(int reservationId)
@@ -120,6 +126,89 @@ namespace LibraryReservationEngine.Infrastructure.Services
                     throw;
                 }
             });
+        }
+
+        public async Task<Result> ReturnBookAsync(int borrowingId)
+        {
+            // 1. Find the borrowing record
+            var borrowing = await _context.Borrowings
+                .Include(b => b.BookCopy)
+                .FirstOrDefaultAsync(b => b.Id == borrowingId);
+
+            if (borrowing is null)
+            {
+                return Result.Fail("Borrowing record not found.");
+            }
+
+            // 2. The borrowing must be Active
+            if (borrowing.Status != BorrowingStatus.Active)
+            {
+                return Result.Fail("This borrowing record is not active or has already been returned.");
+            }
+
+            int copyId = borrowing.BookCopyId;
+            int bookId = borrowing.BookCopy?.BookId ?? 0;
+
+            // 3. Atomic execution for copy release and borrowing return
+            var executionStrategy = _context.Database.CreateExecutionStrategy();
+
+            var result = await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    // Mark copy as Available
+                    bool copyMarkedAvailable = await _bookCopyService.MarkAsAvailableAsync(copyId);
+                    if (!copyMarkedAvailable)
+                    {
+                        await transaction.RollbackAsync();
+                        return Result.Fail("Unable to mark the book copy as available.");
+                    }
+
+                    // Update borrowing status and return timestamp
+                    borrowing.ReturnedAt = DateTime.UtcNow;
+                    borrowing.Status = BorrowingStatus.Returned;
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Result.Ok();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Fail("A concurrency conflict occurred while returning the book. Please try again.");
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+
+            if (!result.Success)
+            {
+                return result;
+            }
+
+            // 4. Trigger waitlist promotion if a book ID exists
+            if (bookId > 0)
+            {
+                await _waitlistService.PromoteNextInLineAsync(bookId);
+            }
+
+            // 5. Evaluate overdue status and invoke fine calculation if late
+            if (borrowing.ReturnedAt.HasValue && borrowing.ReturnedAt.Value > borrowing.DueDate)
+            {
+                int overdueDays = (int)Math.Ceiling((borrowing.ReturnedAt.Value.Date - borrowing.DueDate.Date).TotalDays);
+                if (overdueDays > 0)
+                {
+                    await _fineService.CalculateFineAsync(borrowing.Id);
+                    return Result.Ok($"Book returned successfully. Note: This return is overdue by {overdueDays} day(s).");
+                }
+            }
+
+            return Result.Ok("Book returned successfully.");
         }
 
         public async Task<IEnumerable<BorrowingSummaryDto>> GetMyBorrowingsAsync(string userId)

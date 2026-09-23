@@ -51,6 +51,7 @@
                                 <th>Due Date</th>
                                 <th>Returned On</th>
                                 <th>Status</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -92,6 +93,23 @@
                                             default:
                                                 <span class="badge bg-secondary">@item.Status</span>
                                                 break;
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (item.Status == "Active")
+                                        {
+                                            <form asp-controller="Borrowing" asp-action="Return" method="post" class="d-inline" onsubmit="return confirm('Confirm return for copy @item.CopyCode?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="borrowingId" value="@item.Id" />
+                                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                                    Return Book
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Returned</span>
                                         }
                                     </td>
                                 </tr>

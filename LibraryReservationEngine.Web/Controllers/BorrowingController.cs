@@ -49,6 +49,31 @@ namespace LibraryReservationEngine.Web.Controllers
             return RedirectToAction("Index", "Reservation");
         }
 
+        // POST: /Borrowing/Return
+        [HttpPost]
+        [Authorize(Roles = "Librarian")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Return(int borrowingId, string? returnUrl = null)
+        {
+            var result = await _borrowingService.ReturnBookAsync(borrowingId);
+
+            if (result.Success)
+            {
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         // GET: /Borrowing/MyBorrowings
         [HttpGet]
         public async Task<IActionResult> MyBorrowings()
