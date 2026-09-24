@@ -1,0 +1,33 @@
+﻿@model List<LibraryReservationEngine.Web.Models.MyWaitlistEntryViewModel>
+
+<h2>My Waitlist</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table">
+    <thead>
+        <tr><th>Book</th><th>Position</th><th>Joined</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var e in Model)
+        {
+            <tr>
+                <td>@e.BookTitle</td>
+                <td>#@e.Position</td>
+                <td>@e.JoinedAt.ToLocalTime().ToString("g")</td>
+                <td>
+                    <form asp-action="Leave" asp-route-id="@e.Id" method="post" style="display:inline">
+                        <button type="submit">Leave Waitlist</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
