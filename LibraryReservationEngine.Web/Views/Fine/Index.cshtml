@@ -1,0 +1,158 @@
+@model IEnumerable<LibraryReservationEngine.Application.Common.FineSummaryDto>
+
+@{
+    ViewData["Title"] = "Fines Management";
+    var unpaidFines = Model.Where(f => f.Status == "Unpaid").ToList();
+    var paidFines = Model.Where(f => f.Status == "Paid").ToList();
+    var waivedFines = Model.Where(f => f.Status == "Waived").ToList();
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Fines & Fee Management</h2>
+            <p class="text-muted mb-0">Librarian dashboard: collect student payments, waive exemptions, and audit fines.</p>
+        </div>
+        <div>
+            <a asp-controller="Borrowing" asp-action="Index" class="btn btn-outline-primary">All Borrowings</a>
+            <a asp-controller="Reservation" asp-action="Index" class="btn btn-outline-secondary ms-1">Active Reservations</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Total Outstanding (Unpaid)</h6>
+                    <h3 class="fw-bold text-danger mb-0">₹@unpaidFines.Sum(f => f.Amount).ToString("F2")</h3>
+                    <small class="text-muted">@unpaidFines.Count student record(s)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-success">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Total Collected (Paid)</h6>
+                    <h3 class="fw-bold text-success mb-0">₹@paidFines.Sum(f => f.Amount).ToString("F2")</h3>
+                    <small class="text-muted">@paidFines.Count transaction(s)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-secondary">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Total Waived (Exemptions)</h6>
+                    <h3 class="fw-bold text-secondary mb-0">₹@waivedFines.Sum(f => f.Amount).ToString("F2")</h3>
+                    <small class="text-muted">@waivedFines.Count record(s)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h5 class="alert-heading">No Fines Recorded</h5>
+            <p class="mb-0">There are no fine records in the system.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student / Member</th>
+                                <th>Book Title</th>
+                                <th>Copy Code</th>
+                                <th>Overdue Days</th>
+                                <th>Amount</th>
+                                <th>Assessed On</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fine in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@fine.MemberName</div>
+                                        <small class="text-muted">@fine.MemberEmail</small>
+                                    </td>
+                                    <td class="fw-semibold">@fine.BookTitle</td>
+                                    <td><code>@fine.CopyCode</code></td>
+                                    <td>@fine.OverdueDays day(s)</td>
+                                    <td class="fw-bold">₹@fine.Amount.ToString("F2")</td>
+                                    <td>@fine.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @switch (fine.Status)
+                                        {
+                                            case "Unpaid":
+                                                <span class="badge bg-danger">Unpaid</span>
+                                                break;
+                                            case "Paid":
+                                                <span class="badge bg-success">Paid</span>
+                                                break;
+                                            case "Waived":
+                                                <span class="badge bg-secondary">Waived</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-dark">@fine.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (fine.Status == "Unpaid")
+                                        {
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <form asp-controller="Fine" asp-action="MarkAsPaid" method="post" class="d-inline" onsubmit="return confirm('Confirm payment of ₹@fine.Amount.ToString("F2") from @fine.MemberName?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="fineId" value="@fine.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        Mark Paid
+                                                    </button>
+                                                </form>
+                                                <form asp-controller="Fine" asp-action="Waive" method="post" class="d-inline ms-1" onsubmit="return confirm('Waive fine of ₹@fine.Amount.ToString("F2") for @fine.MemberName?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="fineId" value="@fine.Id" />
+                                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                        Waive
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Settled</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

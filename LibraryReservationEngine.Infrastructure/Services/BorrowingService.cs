@@ -102,7 +102,7 @@ namespace LibraryReservationEngine.Infrastructure.Services
                         UserId = reservation.UserId,
                         BookCopyId = copyId,
                         IssuedAt = DateTime.UtcNow,
-                        DueDate = DateTime.UtcNow.AddDays(14),
+                        DueDate = DateTime.UtcNow.AddDays(-3),
                         Status = BorrowingStatus.Active
                     };
                     _context.Borrowings.Add(borrowing);
