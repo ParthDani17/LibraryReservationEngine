@@ -31,6 +31,9 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="Index">All Borrowings</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Fine" asp-action="Index">Fines</a>
+                            </li>
                         }
                         else if (User.IsInRole("Member"))
                         {
@@ -42,6 +45,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="MyBorrowings">My Borrowings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Fine" asp-action="MyFines">My Fines</a>
                             </li>
                         }
                     </ul>

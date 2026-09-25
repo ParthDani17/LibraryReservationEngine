@@ -1,0 +1,131 @@
+@model IEnumerable<LibraryReservationEngine.Application.Common.FineSummaryDto>
+
+@{
+    ViewData["Title"] = "My Fines";
+    var unpaidFines = Model.Where(f => f.Status == "Unpaid").ToList();
+    var totalUnpaid = unpaidFines.Sum(f => f.Amount);
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>My Fines & Penalties</h2>
+            <p class="text-muted mb-0">Review overdue fees and payment history.</p>
+        </div>
+        <a asp-controller="Borrowing" asp-action="MyBorrowings" class="btn btn-outline-secondary">My Borrowings</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Outstanding Fines</h6>
+                    <h3 class="fw-bold text-danger mb-0">₹@totalUnpaid.ToString("F2")</h3>
+                    <small class="text-muted">@unpaidFines.Count unpaid record(s)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-success">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Paid Fines</h6>
+                    <h3 class="fw-bold text-success mb-0">₹@Model.Where(f => f.Status == "Paid").Sum(f => f.Amount).ToString("F2")</h3>
+                    <small class="text-muted">@Model.Count(f => f.Status == "Paid") settled record(s)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-secondary">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase mb-1">Waived Fines</h6>
+                    <h3 class="fw-bold text-secondary mb-0">₹@Model.Where(f => f.Status == "Waived").Sum(f => f.Amount).ToString("F2")</h3>
+                    <small class="text-muted">@Model.Count(f => f.Status == "Waived") waived record(s)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (totalUnpaid > 0)
+    {
+        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2 fs-5"></i>
+            <div>
+                You have outstanding fines totaling <strong>₹@totalUnpaid.ToString("F2")</strong>. Please settle your fines at the library circulation desk.
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h5 class="alert-heading">No Fine Records</h5>
+            <p class="mb-0">You have no overdue fines on your account. Good job keeping books returned on time!</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Book Title</th>
+                                <th>Copy Code</th>
+                                <th>Overdue Days</th>
+                                <th>Amount</th>
+                                <th>Assessed Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fine in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@fine.BookTitle</td>
+                                    <td><code>@fine.CopyCode</code></td>
+                                    <td>@fine.OverdueDays day(s)</td>
+                                    <td class="fw-bold">₹@fine.Amount.ToString("F2")</td>
+                                    <td>@fine.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @switch (fine.Status)
+                                        {
+                                            case "Unpaid":
+                                                <span class="badge bg-danger">Unpaid</span>
+                                                break;
+                                            case "Paid":
+                                                <span class="badge bg-success">Paid</span>
+                                                break;
+                                            case "Waived":
+                                                <span class="badge bg-secondary">Waived</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-dark">@fine.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
