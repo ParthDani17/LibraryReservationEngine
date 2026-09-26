@@ -103,6 +103,10 @@ namespace LibraryReservationEngine.Infrastructure.Services
             if (copy.Status == BookCopyStatus.Borrowed || copy.Status == BookCopyStatus.Reserved)
                 return false; // can't delete a copy that's out with someone
 
+            bool hasReservationHistory = await _context.Reservations.AnyAsync(r => r.BookCopyId == copyId);
+            if (hasReservationHistory)
+                return false; // has past reservations — deleting would break the FK, and would lose history anyway
+
             _context.BookCopies.Remove(copy);
             await _context.SaveChangesAsync();
             return true;

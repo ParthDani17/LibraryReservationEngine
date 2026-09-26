@@ -82,7 +82,7 @@ namespace LibraryReservationEngine.Web.Controllers
             var success = await _bookCopyService.DeleteCopyAsync(id);
             if (!success)
             {
-                TempData["Error"] = "Cannot delete — copy is currently reserved or borrowed.";
+                TempData["Error"] = "Cannot delete — this copy is currently borrowed/reserved, or has past reservation history.";
             }
             return RedirectToAction(nameof(Index), new { bookId });
         }
