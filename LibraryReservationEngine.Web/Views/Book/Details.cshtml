@@ -131,6 +131,10 @@
                         <a asp-controller="BookCopy" asp-action="Index" asp-route-bookId="@Model.Id" class="btn btn-outline-primary btn-sm">
                             Manage Copies
                         </a>
+
+                        <a asp-action="History" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">
+                            View Borrow History
+                        </a>
                     }
                 </div>
                 <div class="card-body p-0">

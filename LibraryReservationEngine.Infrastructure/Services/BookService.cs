@@ -95,6 +95,25 @@ namespace LibraryReservationEngine.Infrastructure.Services
                 .FirstOrDefaultAsync(b => b.Id == bookId);
         }
 
+        public async Task<IEnumerable<BookBorrowHistoryDto>> GetBorrowHistoryAsync(int bookId)
+        {
+            return await _context.Borrowings
+                .Where(b => b.BookCopy!.BookId == bookId)
+                .Include(b => b.User)
+                .Include(b => b.BookCopy)
+                .OrderByDescending(b => b.IssuedAt)
+                .Select(b => new BookBorrowHistoryDto
+                {
+                    StudentName = b.User!.FullName,
+                    CopyCode = b.BookCopy!.CopyCode,
+                    IssuedAt = b.IssuedAt,
+                    DueDate = b.DueDate,
+                    ReturnedAt = b.ReturnedAt,
+                    Status = b.Status.ToString()
+                })
+                .ToListAsync();
+        }
+
         private async Task<Author> FindOrCreateAuthorAsync(string name)
         {
             var author = await _context.Authors.FirstOrDefaultAsync(a => a.Name == name);
