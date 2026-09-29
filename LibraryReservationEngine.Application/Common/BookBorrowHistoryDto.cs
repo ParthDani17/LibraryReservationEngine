@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LibraryReservationEngine.Application.Common
+﻿namespace LibraryReservationEngine.Application.Common
 {
-    internal class BookBorrowHistoryDto
+    public class BookBorrowHistoryDto
     {
+        public string StudentName { get; set; } = string.Empty;
+        public string CopyCode { get; set; } = string.Empty;
+        public DateTime IssuedAt { get; set; }
+        public DateTime DueDate { get; set; }
+        public DateTime? ReturnedAt { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 }

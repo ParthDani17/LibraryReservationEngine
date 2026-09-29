@@ -1,5 +1,38 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@model List<LibraryReservationEngine.Web.Models.BookBorrowHistoryViewModel>
+
+<h2>Borrow History — @ViewData["BookTitle"]</h2>
+
+@if (!Model.Any())
+{
+    <p>No borrowing history yet for this book.</p>
 }
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Copy</th>
+                <th>Issued</th>
+                <th>Due</th>
+                <th>Returned</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var h in Model)
+            {
+                <tr>
+                    <td>@h.StudentName</td>
+                    <td>@h.CopyCode</td>
+                    <td>@h.IssuedAt.ToLocalTime().ToString("d")</td>
+                    <td>@h.DueDate.ToLocalTime().ToString("d")</td>
+                    <td>@(h.ReturnedAt?.ToLocalTime().ToString("d") ?? "Not returned")</td>
+                    <td>@h.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Details" asp-route-id="@ViewData["BookId"]">Back to Book Details</a>
