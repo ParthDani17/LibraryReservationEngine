@@ -48,8 +48,12 @@ namespace LibraryReservationEngine.Infrastructure.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Two requests raced for the same copy — this one loses.
-                // Fully handled/tested in feature/concurrency.
+                // Discard our failed in-memory change and refresh from the database.
+                // Without this, the entity stays tracked as "Modified" with a stale
+                // RowVersion, and the NEXT SaveChangesAsync call in this request
+                // (even for something unrelated, like adding a WaitlistEntry) will
+                // try to re-save this same stale change and throw the same exception again.
+                await _context.Entry(copy).ReloadAsync();
                 return false;
             }
         }
