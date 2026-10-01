@@ -26,6 +26,9 @@
                         @if (User.IsInRole("Librarian"))
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Reservation" asp-action="Index">Active Reservations</a>
                             </li>
                             <li class="nav-item">
