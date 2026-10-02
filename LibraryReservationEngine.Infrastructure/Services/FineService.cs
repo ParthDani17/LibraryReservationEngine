@@ -77,17 +77,32 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
             // Dispatch notification to user
             string bookTitle = borrowing.BookCopy?.Book?.Title ?? "your borrowed book";
+            var student = await _context.Users.FindAsync(borrowing.UserId);
+            var studentName = student?.FullName ?? student?.UserName ?? "Student";
+
+            // 1. Notify Student
             await _notificationService.SendAsync(
                 borrowing.UserId,
                 NotificationType.FineIssued,
                 $"You have an overdue fine of ₹{fineAmount:F2} for {overdueDays} day(s) on '{bookTitle}'. Please settle it with the library.");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.FineIssued,
+                $"Overdue fine of ₹{fineAmount:F2} ({overdueDays} day(s)) generated for student {studentName} on '{bookTitle}'.");
 
             return fineAmount;
         }
 
         public async Task<Result> MarkFineAsPaidAsync(int fineId)
         {
-            var fine = await _context.Fines.FindAsync(fineId);
+            var fine = await _context.Fines
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.BookCopy)
+                        .ThenInclude(c => c!.Book)
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.User)
+                .FirstOrDefaultAsync(f => f.Id == fineId);
 
             if (fine is null)
             {
@@ -107,12 +122,86 @@ namespace LibraryReservationEngine.Infrastructure.Services
             fine.Status = FineStatus.Paid;
             await _context.SaveChangesAsync();
 
+            var studentId = fine.Borrowing?.UserId;
+            var studentName = fine.Borrowing?.User?.FullName ?? fine.Borrowing?.User?.UserName ?? "Student";
+            var bookTitle = fine.Borrowing?.BookCopy?.Book?.Title ?? "the book";
+
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                // 1. Notify Student
+                await _notificationService.SendAsync(
+                    studentId,
+                    NotificationType.FinePaid,
+                    $"Your fine of ₹{fine.Amount:F2} for '{bookTitle}' has been marked as paid by the librarian.");
+            }
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.FinePaid,
+                $"Fine of ₹{fine.Amount:F2} for student {studentName} on '{bookTitle}' was marked as paid.");
+
             return Result.Ok("Fine marked as paid successfully.");
+        }
+
+        public async Task<Result> PayFineAsync(int fineId, string userId)
+        {
+            var fine = await _context.Fines
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.BookCopy)
+                        .ThenInclude(c => c!.Book)
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.User)
+                .FirstOrDefaultAsync(f => f.Id == fineId);
+
+            if (fine is null)
+            {
+                return Result.Fail("Fine record not found.");
+            }
+
+            if (fine.Borrowing?.UserId != userId)
+            {
+                return Result.Fail("This fine does not belong to you.");
+            }
+
+            if (fine.Status == FineStatus.Paid)
+            {
+                return Result.Fail("This fine is already paid.");
+            }
+
+            if (fine.Status == FineStatus.Waived)
+            {
+                return Result.Fail("This fine has been waived.");
+            }
+
+            fine.Status = FineStatus.Paid;
+            await _context.SaveChangesAsync();
+
+            var studentName = fine.Borrowing?.User?.FullName ?? fine.Borrowing?.User?.UserName ?? "Student";
+            var bookTitle = fine.Borrowing?.BookCopy?.Book?.Title ?? "the book";
+
+            // 1. Notify Student
+            await _notificationService.SendAsync(
+                userId,
+                NotificationType.FinePaid,
+                $"Your payment of ₹{fine.Amount:F2} for '{bookTitle}' was successful.");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.FinePaid,
+                $"Student {studentName} paid their fine of ₹{fine.Amount:F2} for '{bookTitle}'.");
+
+            return Result.Ok("Fine paid successfully.");
         }
 
         public async Task<Result> WaiveFineAsync(int fineId)
         {
-            var fine = await _context.Fines.FindAsync(fineId);
+            var fine = await _context.Fines
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.BookCopy)
+                        .ThenInclude(c => c!.Book)
+                .Include(f => f.Borrowing)
+                    .ThenInclude(b => b!.User)
+                .FirstOrDefaultAsync(f => f.Id == fineId);
 
             if (fine is null)
             {
@@ -131,6 +220,17 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
             fine.Status = FineStatus.Waived;
             await _context.SaveChangesAsync();
+
+            var studentId = fine.Borrowing?.UserId;
+            var bookTitle = fine.Borrowing?.BookCopy?.Book?.Title ?? "the book";
+
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                await _notificationService.SendAsync(
+                    studentId,
+                    NotificationType.FineIssued,
+                    $"Your fine of ₹{fine.Amount:F2} for '{bookTitle}' has been waived by the librarian.");
+            }
 
             return Result.Ok("Fine waived successfully.");
         }

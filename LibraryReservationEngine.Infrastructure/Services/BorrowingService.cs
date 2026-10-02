@@ -13,17 +13,20 @@ namespace LibraryReservationEngine.Infrastructure.Services
         private readonly IBookCopyService _bookCopyService;
         private readonly IWaitlistService _waitlistService;
         private readonly IFineService _fineService;
+        private readonly INotificationService _notificationService;
 
         public BorrowingService(
             ApplicationDbContext context,
             IBookCopyService bookCopyService,
             IWaitlistService waitlistService,
-            IFineService fineService)
+            IFineService fineService,
+            INotificationService notificationService)
         {
             _context = context;
             _bookCopyService = bookCopyService;
             _waitlistService = waitlistService;
             _fineService = fineService;
+            _notificationService = notificationService;
         }
 
         public async Task<Result> IssueBookAsync(int reservationId)
@@ -102,7 +105,7 @@ namespace LibraryReservationEngine.Infrastructure.Services
                         UserId = reservation.UserId,
                         BookCopyId = copyId,
                         IssuedAt = DateTime.UtcNow,
-                        DueDate = DateTime.UtcNow.AddDays(-3),
+                        DueDate = DateTime.UtcNow.AddDays(14),
                         Status = BorrowingStatus.Active
                     };
                     _context.Borrowings.Add(borrowing);
@@ -112,6 +115,25 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
+
+                    // Load book and student information for notifications
+                    var bookCopy = await _context.BookCopies
+                        .Include(c => c.Book)
+                        .FirstOrDefaultAsync(c => c.Id == copyId);
+                    var student = await _context.Users.FindAsync(reservation.UserId);
+                    var bookTitle = bookCopy?.Book?.Title ?? "the book";
+                    var studentName = student?.FullName ?? student?.UserName ?? "Student";
+
+                    // 1. Notify Student
+                    await _notificationService.SendAsync(
+                        reservation.UserId,
+                        NotificationType.BookIssued,
+                        $"Book '{bookTitle}' has been issued to you! Due date is {borrowing.DueDate:MMM dd, yyyy}.");
+
+                    // 2. Notify Librarians
+                    await _notificationService.SendToLibrariansAsync(
+                        NotificationType.BookIssued,
+                        $"Book '{bookTitle}' was issued to student {studentName}. Due date: {borrowing.DueDate:MMM dd, yyyy}.");
 
                     return Result.Ok("Book issued successfully.");
                 }
@@ -190,6 +212,21 @@ namespace LibraryReservationEngine.Infrastructure.Services
             {
                 return result;
             }
+
+            var bookTitle = borrowing.BookCopy?.Book?.Title ?? "the book";
+            var student = await _context.Users.FindAsync(borrowing.UserId);
+            var studentName = student?.FullName ?? student?.UserName ?? "Student";
+
+            // 1. Notify Student
+            await _notificationService.SendAsync(
+                borrowing.UserId,
+                NotificationType.BookReturned,
+                $"Book '{bookTitle}' has been returned successfully. Thank you!");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.BookReturned,
+                $"Book '{bookTitle}' was returned by student {studentName}.");
 
             // 4. Trigger waitlist promotion if a book ID exists
             if (bookId > 0)

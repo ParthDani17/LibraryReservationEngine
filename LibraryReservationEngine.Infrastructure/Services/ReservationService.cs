@@ -68,9 +68,20 @@ namespace LibraryReservationEngine.Infrastructure.Services
                     _context.Reservations.Add(reservation);
                     await _context.SaveChangesAsync();
 
+                    var book = await _context.Books.FindAsync(bookId);
+                    var user = await _context.Users.FindAsync(userId);
+                    var bookTitle = book?.Title ?? "the book";
+                    var studentName = user?.FullName ?? user?.UserName ?? "A student";
+
+                    // 1. Notify Student
                     await _notificationService.SendAsync(
                         userId, NotificationType.ReservationReady,
-                        "Your reservation is ready for pickup.");
+                        $"Your reservation for '{bookTitle}' is ready for pickup! Please collect it within {HoldPeriodHours} hours.");
+
+                    // 2. Notify Librarians
+                    await _notificationService.SendToLibrariansAsync(
+                        NotificationType.BookReserved,
+                        $"Student {studentName} reserved '{bookTitle}'.");
 
                     return Result.Ok("Reservation created successfully.");
                 }
@@ -92,6 +103,21 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
             reservation.Status = ReservationStatus.Cancelled;
             await _context.SaveChangesAsync();
+
+            var book = await _context.Books.FindAsync(reservation.BookId);
+            var user = await _context.Users.FindAsync(userId);
+            var bookTitle = book?.Title ?? "the book";
+            var studentName = user?.FullName ?? user?.UserName ?? "Student";
+
+            // 1. Notify Student
+            await _notificationService.SendAsync(
+                userId, NotificationType.ReservationCancelled,
+                $"Your reservation for '{bookTitle}' has been cancelled.");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.ReservationCancelled,
+                $"Student {studentName} cancelled their reservation for '{bookTitle}'.");
 
             if (reservation.BookCopyId.HasValue)
             {

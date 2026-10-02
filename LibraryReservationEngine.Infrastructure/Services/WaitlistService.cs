@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Application.Common;
+using LibraryReservationEngine.Application.Common;
 using LibraryReservationEngine.Application.Interfaces;
 using LibraryReservationEngine.Domain.Entities;
 using LibraryReservationEngine.Domain.Enums;
@@ -52,6 +52,21 @@ namespace LibraryReservationEngine.Infrastructure.Services
             _context.WaitlistEntries.Add(entry);
             await _context.SaveChangesAsync();
 
+            var book = await _context.Books.FindAsync(bookId);
+            var user = await _context.Users.FindAsync(userId);
+            var bookTitle = book?.Title ?? "the book";
+            var studentName = user?.FullName ?? user?.UserName ?? "Student";
+
+            // 1. Notify Student
+            await _notificationService.SendAsync(
+                userId, NotificationType.WaitlistJoined,
+                $"You joined the waitlist for '{bookTitle}' (Position #{entry.Position}).");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.WaitlistJoined,
+                $"Student {studentName} joined waitlist for '{bookTitle}' (Position #{entry.Position}).");
+
             return Result.Ok($"No copies available — you're #{entry.Position} on the waitlist.");
         }
 
@@ -101,9 +116,20 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
             await ReorderPositionsAfterAsync(bookId, next.Position);
 
+            var book = await _context.Books.FindAsync(bookId);
+            var user = await _context.Users.FindAsync(next.UserId);
+            var bookTitle = book?.Title ?? "the book";
+            var studentName = user?.FullName ?? user?.UserName ?? "Student";
+
+            // 1. Notify Student
             await _notificationService.SendAsync(
                 next.UserId, NotificationType.WaitlistPromoted,
-                "A copy is now reserved for you — you were promoted from the waitlist.");
+                $"A copy of '{bookTitle}' is now reserved for you — you were promoted from the waitlist! Please pick it up within {HoldPeriodHours} hours.");
+
+            // 2. Notify Librarians
+            await _notificationService.SendToLibrariansAsync(
+                NotificationType.WaitlistPromoted,
+                $"Waitlist promoted for '{bookTitle}': reserved for student {studentName}.");
         }
 
         private async Task ReorderPositionsAfterAsync(int bookId, int removedPosition)

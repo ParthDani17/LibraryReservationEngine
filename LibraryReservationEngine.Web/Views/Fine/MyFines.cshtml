@@ -92,6 +92,7 @@
                                 <th>Amount</th>
                                 <th>Assessed Date</th>
                                 <th>Status</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -118,6 +119,22 @@
                                             default:
                                                 <span class="badge bg-dark">@fine.Status</span>
                                                 break;
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (fine.Status == "Unpaid")
+                                        {
+                                            <form asp-action="Pay" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="fineId" value="@fine.Id" />
+                                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirm payment of ₹@fine.Amount.ToString("F2") for this fine?');">
+                                                    <i class="bi bi-credit-card-fill"></i> Pay Fine
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">&mdash;</span>
                                         }
                                     </td>
                                 </tr>

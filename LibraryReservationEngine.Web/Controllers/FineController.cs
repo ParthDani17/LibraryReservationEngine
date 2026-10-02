@@ -88,5 +88,32 @@ namespace LibraryReservationEngine.Web.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // POST: /Fine/Pay
+        [HttpPost]
+        [Authorize(Roles = "Member")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Pay(int fineId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _fineService.PayFineAsync(fineId, userId);
+
+            if (result.Success)
+            {
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(MyFines));
+        }
     }
 }
