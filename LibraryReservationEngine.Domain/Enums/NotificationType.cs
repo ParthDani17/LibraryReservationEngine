@@ -5,6 +5,12 @@ namespace LibraryReservationEngine.Domain.Enums
         ReservationReady,
         WaitlistPromoted,
         OverdueReminder,
-        FineIssued
+        FineIssued,
+        BookReserved,
+        ReservationCancelled,
+        WaitlistJoined,
+        BookIssued,
+        BookReturned,
+        FinePaid
     }
 }

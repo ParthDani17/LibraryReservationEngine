@@ -13,5 +13,7 @@ namespace LibraryReservationEngine.Application.Interfaces
         Task<Result> DeleteBookAsync(int bookId);
         Task<IEnumerable<Book>> SearchBooksAsync(string? query);
         Task<Book?> GetBookDetailsAsync(int bookId);
+
+        Task<IEnumerable<BookBorrowHistoryDto>> GetBorrowHistoryAsync(int bookId);
     }
 }

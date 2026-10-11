@@ -1,3 +1,4 @@
+using LibraryReservationEngine.Application.Common;
 using LibraryReservationEngine.Domain.Enums;
 
 namespace LibraryReservationEngine.Application.Interfaces
@@ -6,5 +7,10 @@ namespace LibraryReservationEngine.Application.Interfaces
     public interface INotificationService
     {
         Task SendAsync(string userId, NotificationType type, string message);
+        Task SendToLibrariansAsync(NotificationType type, string message);
+        Task<IEnumerable<NotificationSummaryDto>> GetMyNotificationsAsync(string userId);
+        Task<int> GetUnreadCountAsync(string userId);
+        Task<Result> MarkAsReadAsync(int notificationId, string userId);
+        Task<Result> MarkAllAsReadAsync(string userId);
     }
 }

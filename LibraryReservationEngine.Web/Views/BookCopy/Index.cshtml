@@ -1,0 +1,62 @@
+﻿@model LibraryReservationEngine.Web.Models.BookCopyListViewModel
+
+<h2>Manage Copies — @Model.BookTitle</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="Add" method="post" class="mb-3">
+    <input type="hidden" name="BookId" value="@Model.BookId" />
+    <input type="text" name="CopyCode" placeholder="e.g. CLN-004" required />
+    <button type="submit">+ Add Copy</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Copy Code</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var copy in Model.Copies)
+        {
+            <tr>
+                <td>@copy.CopyCode</td>
+                <td>@copy.Status</td>
+                <td>
+                    @if (copy.Status == "Available")
+                    {
+                        <form asp-action="SetMaintenance" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@copy.Id" />
+                            <input type="hidden" name="bookId" value="@Model.BookId" />
+                            <button type="submit">Set Maintenance</button>
+                        </form>
+                        <form asp-action="Delete" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@copy.Id" />
+                            <input type="hidden" name="bookId" value="@Model.BookId" />
+                            <button type="submit">Delete</button>
+                        </form>
+                    }
+                    else if (copy.Status == "Maintenance")
+                    {
+                        <form asp-action="SetAvailable" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@copy.Id" />
+                            <input type="hidden" name="bookId" value="@Model.BookId" />
+                            <button type="submit">Mark Available</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span>(currently @copy.Status.ToLower() — no actions available)</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId">Back to Book Details</a>

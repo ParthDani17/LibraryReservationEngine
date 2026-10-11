@@ -103,5 +103,28 @@ namespace LibraryReservationEngine.Web.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        // GET /Book/History/5
+        [Authorize(Roles = "Librarian")]
+        public async Task<IActionResult> History(int id)
+        {
+            var book = await _bookService.GetBookDetailsAsync(id);
+            if (book is null) return NotFound();
+
+            var history = await _bookService.GetBorrowHistoryAsync(id);
+            var models = history.Select(h => new BookBorrowHistoryViewModel
+            {
+                StudentName = h.StudentName,
+                CopyCode = h.CopyCode,
+                IssuedAt = h.IssuedAt,
+                DueDate = h.DueDate,
+                ReturnedAt = h.ReturnedAt,
+                Status = h.Status
+            }).ToList();
+
+            ViewData["BookTitle"] = book.Title;
+            ViewData["BookId"] = id;
+            return View(models);
+        }
     }
 }

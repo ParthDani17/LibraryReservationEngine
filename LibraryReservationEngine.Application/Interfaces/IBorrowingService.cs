@@ -6,8 +6,9 @@ namespace LibraryReservationEngine.Application.Interfaces
     // not on Person A's actual code.
     public interface IBorrowingService
     {
-        Task<Result> IssueBookAsync(string userId, int reservationId);
+        Task<Result> IssueBookAsync(int reservationId);
         Task<Result> ReturnBookAsync(int borrowingId);
-        Task<IEnumerable<object>> GetMyBorrowingsAsync(string userId);
+        Task<IEnumerable<BorrowingSummaryDto>> GetMyBorrowingsAsync(string userId);
+        Task<IEnumerable<BorrowingSummaryDto>> GetAllBorrowingsAsync();
     }
 }

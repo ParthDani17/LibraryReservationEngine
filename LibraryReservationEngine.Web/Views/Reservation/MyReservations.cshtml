@@ -1,0 +1,37 @@
+﻿@model List<LibraryReservationEngine.Web.Models.MyReservationViewModel>
+
+<h2>My Reservations</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table">
+    <thead>
+        <tr><th>Book</th><th>Status</th><th>Reserved On</th><th>Expires</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.BookTitle</td>
+                <td>@r.Status</td>
+                <td>@r.CreatedAt.ToLocalTime().ToString("g")</td>
+                <td>@(r.ExpiresAt?.ToLocalTime().ToString("g") ?? "-")</td>
+                <td>
+                    @if (r.Status == "Active" || r.Status == "Pending")
+                    {
+                        <form asp-action="Cancel" asp-route-id="@r.Id" method="post" style="display:inline">
+                            <button type="submit">Cancel</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

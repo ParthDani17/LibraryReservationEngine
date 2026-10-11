@@ -14,7 +14,7 @@ namespace LibraryReservationEngine.Domain.Entities
         public BookCopyStatus Status { get; set; } = BookCopyStatus.Available;
 
         // Concurrency token: EF Core will use this to detect two simultaneous
-        // updates to the same copy (Phase 11 - concurrency handling).
+        // updates to the same copy .
         public byte[]? RowVersion { get; set; }
     }
 }

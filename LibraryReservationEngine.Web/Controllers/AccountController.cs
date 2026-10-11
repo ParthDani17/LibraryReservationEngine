@@ -94,7 +94,20 @@ namespace LibraryReservationEngine.Web.Controllers
                     return Redirect(returnUrl);
                 }
 
-                return RedirectToAction("Index", "Home");
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+
+                    if (roles.Contains("Librarian"))
+                    {
+                        return RedirectToAction("Index", "Dashboard");
+                    }
+                    else if (roles.Contains("Member"))
+                    {
+                        return RedirectToAction("Index", "Book");
+                    }
+                }
             }
 
             ModelState.AddModelError(

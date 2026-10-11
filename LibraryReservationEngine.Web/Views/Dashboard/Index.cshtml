@@ -1,0 +1,84 @@
+﻿@model LibraryReservationEngine.Web.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Librarian Dashboard</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="text-muted small">Total Books</div>
+                <div class="fs-2 fw-bold">@Model.TotalBooks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="text-muted small">Total Copies</div>
+                <div class="fs-2 fw-bold">@Model.TotalCopies</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="text-muted small">Registered Members</div>
+                <div class="fs-2 fw-bold">@Model.TotalRegisteredMembers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3 bg-danger bg-opacity-10">
+                <div class="text-muted small">Overdue Borrowings</div>
+                <div class="fs-2 fw-bold text-danger">@Model.OverdueBorrowings</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3 bg-success bg-opacity-10">
+                <div class="text-muted small">Available Copies</div>
+                <div class="fs-3 fw-bold text-success">@Model.AvailableCopies</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3 bg-primary bg-opacity-10">
+                <div class="text-muted small">Borrowed Copies</div>
+                <div class="fs-3 fw-bold text-primary">@Model.BorrowedCopies</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3 bg-warning bg-opacity-10">
+                <div class="text-muted small">Reserved Copies</div>
+                <div class="fs-3 fw-bold text-warning">@Model.ReservedCopies</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center p-3 bg-secondary bg-opacity-10">
+                <div class="text-muted small">In Maintenance</div>
+                <div class="fs-3 fw-bold text-secondary">@Model.MaintenanceCopies</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="text-muted small">Active Reservations</div>
+                <div class="fs-3 fw-bold">@Model.ActiveReservations</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <div class="text-muted small">Active Waitlist Entries</div>
+                <div class="fs-3 fw-bold">@Model.ActiveWaitlistEntries</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3 bg-danger bg-opacity-10">
+                <div class="text-muted small">Outstanding Fines</div>
+                <div class="fs-3 fw-bold text-danger">₹@Model.TotalOutstandingFines.ToString("N2")</div>
+            </div>
+        </div>
+    </div>
+</div>
