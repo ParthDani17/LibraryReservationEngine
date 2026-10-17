@@ -3,55 +3,61 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - LibraryReservationEngine.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - Library Reservation & Borrowing Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/LibraryReservationEngine.Web.styles.css" asp-append-version="true" />
 </head>
+@{
+    var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAct = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">Library Reservation</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+        <nav class="navbar navbar-expand-lg site-navbar">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Library Engine</a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Book" asp-action="Index">Books</a>
+                            <a class="nav-link @(currentCtrl == "Book" && (currentAct == "Index" || currentAct == "Details") ? "active" : "")" asp-controller="Book" asp-action="Index">Books</a>
                         </li>
                         @if (User.IsInRole("Librarian"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                                <a class="nav-link @(currentCtrl == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Reservation" asp-action="Index">Active Reservations</a>
+                                <a class="nav-link @(currentCtrl == "Reservation" && currentAct == "Index" ? "active" : "")" asp-controller="Reservation" asp-action="Index">Active Reservations</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="Index">All Borrowings</a>
+                                <a class="nav-link @(currentCtrl == "Borrowing" && currentAct == "Index" ? "active" : "")" asp-controller="Borrowing" asp-action="Index">All Borrowings</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Fine" asp-action="Index">Fines</a>
+                                <a class="nav-link @(currentCtrl == "Fine" && currentAct == "Index" ? "active" : "")" asp-controller="Fine" asp-action="Index">Fines</a>
                             </li>
                         }
                         else if (User.IsInRole("Member"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Reservation" asp-action="MyReservations">My Reservations</a>
+                                <a class="nav-link @(currentCtrl == "Reservation" && currentAct == "MyReservations" ? "active" : "")" asp-controller="Reservation" asp-action="MyReservations">My Reservations</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Waitlist" asp-action="MyWaitlist">My Waitlist</a>
+                                <a class="nav-link @(currentCtrl == "Waitlist" ? "active" : "")" asp-controller="Waitlist" asp-action="MyWaitlist">My Waitlist</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Borrowing" asp-action="MyBorrowings">My Borrowings</a>
+                                <a class="nav-link @(currentCtrl == "Borrowing" && currentAct == "MyBorrowings" ? "active" : "")" asp-controller="Borrowing" asp-action="MyBorrowings">My Borrowings</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Fine" asp-action="MyFines">My Fines</a>
+                                <a class="nav-link @(currentCtrl == "Fine" && currentAct == "MyFines" ? "active" : "")" asp-controller="Fine" asp-action="MyFines">My Fines</a>
                             </li>
                         }
                     </ul>
@@ -59,13 +65,13 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item me-2">
-                                <a class="nav-link text-dark d-inline-flex align-items-center gap-1" asp-controller="Notification" asp-action="Index" title="Notifications">
-                                    <i class="bi bi-bell-fill text-primary"></i> Notifications
+                                <a class="nav-link @(currentCtrl == "Notification" ? "active" : "") d-inline-flex align-items-center gap-1" asp-controller="Notification" asp-action="Index" title="Notifications">
+                                    <i class="bi bi-bell"></i>
                                 </a>
                             </li>
                             <li class="nav-item me-3">
-                                <span class="navbar-text">
-                                    Hello, <strong>@User.Identity.Name</strong>
+                                <span class="navbar-text small text-muted">
+                                    Hello, <strong class="text-dark">@User.Identity.Name</strong>
                                 </span>
                             </li>
                             <li class="nav-item">
@@ -78,10 +84,10 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link @(currentCtrl == "Account" && currentAct == "Login" ? "active" : "")" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
-                            <li class="nav-item ms-2">
-                                <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Register</a>
+                            <li class="nav-item ms-lg-2">
+                                <a class="btn btn-primary btn-sm @(currentCtrl == "Account" && currentAct == "Register" ? "active" : "")" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                         }
                     </ul>
@@ -89,17 +95,22 @@
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - LibraryReservationEngine.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main role="main" class="py-4">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer mt-auto">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                &copy; 2026 Library Reservation & Borrowing Engine. All rights reserved.
+            </div>
+            <div>
+                <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-muted small">Privacy Policy</a>
+            </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

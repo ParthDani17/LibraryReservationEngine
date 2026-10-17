@@ -1,83 +1,89 @@
-﻿@model LibraryReservationEngine.Web.Models.DashboardViewModel
+@model LibraryReservationEngine.Web.Models.DashboardViewModel
 
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Librarian Dashboard";
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4">Librarian Dashboard</h2>
+<div class="container">
+    <div class="mb-4">
+        <span class="label-caps">Administration</span>
+        <h1 class="h2 mb-0">Librarian Dashboard</h1>
+    </div>
 
+    <!-- Top Row of Four Large Stat Cards (Overdue Borrowings in red) -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small">Total Books</div>
-                <div class="fs-2 fw-bold">@Model.TotalBooks</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Books</div>
+                <div class="stat-value">@Model.TotalBooks</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small">Total Copies</div>
-                <div class="fs-2 fw-bold">@Model.TotalCopies</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Copies</div>
+                <div class="stat-value">@Model.TotalCopies</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small">Registered Members</div>
-                <div class="fs-2 fw-bold">@Model.TotalRegisteredMembers</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Registered Members</div>
+                <div class="stat-value">@Model.TotalRegisteredMembers</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3 bg-danger bg-opacity-10">
-                <div class="text-muted small">Overdue Borrowings</div>
-                <div class="fs-2 fw-bold text-danger">@Model.OverdueBorrowings</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-danger">
+                <div class="stat-label">Overdue Borrowings</div>
+                <div class="stat-value">@Model.OverdueBorrowings</div>
             </div>
         </div>
     </div>
 
+    <!-- Second Row with Colored Stat Cards: Available (green), Borrowed (charcoal), Reserved (amber), Maintenance (grey) -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3 bg-success bg-opacity-10">
-                <div class="text-muted small">Available Copies</div>
-                <div class="fs-3 fw-bold text-success">@Model.AvailableCopies</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-available">
+                <div class="stat-label">Available Copies</div>
+                <div class="stat-value">@Model.AvailableCopies</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3 bg-primary bg-opacity-10">
-                <div class="text-muted small">Borrowed Copies</div>
-                <div class="fs-3 fw-bold text-primary">@Model.BorrowedCopies</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-borrowed">
+                <div class="stat-label">Borrowed Copies</div>
+                <div class="stat-value">@Model.BorrowedCopies</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3 bg-warning bg-opacity-10">
-                <div class="text-muted small">Reserved Copies</div>
-                <div class="fs-3 fw-bold text-warning">@Model.ReservedCopies</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-reserved">
+                <div class="stat-label">Reserved Copies</div>
+                <div class="stat-value">@Model.ReservedCopies</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center p-3 bg-secondary bg-opacity-10">
-                <div class="text-muted small">In Maintenance</div>
-                <div class="fs-3 fw-bold text-secondary">@Model.MaintenanceCopies</div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-maintenance">
+                <div class="stat-label">In Maintenance</div>
+                <div class="stat-value">@Model.MaintenanceCopies</div>
             </div>
         </div>
     </div>
 
+    <!-- Third Row: Active Reservations, Active Waitlist Entries, Outstanding Fines in rupees (red) -->
     <div class="row g-3">
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small">Active Reservations</div>
-                <div class="fs-3 fw-bold">@Model.ActiveReservations</div>
+            <div class="stat-card">
+                <div class="stat-label">Active Reservations</div>
+                <div class="stat-value">@Model.ActiveReservations</div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3">
-                <div class="text-muted small">Active Waitlist Entries</div>
-                <div class="fs-3 fw-bold">@Model.ActiveWaitlistEntries</div>
+            <div class="stat-card">
+                <div class="stat-label">Active Waitlist Entries</div>
+                <div class="stat-value">@Model.ActiveWaitlistEntries</div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center p-3 bg-danger bg-opacity-10">
-                <div class="text-muted small">Outstanding Fines</div>
-                <div class="fs-3 fw-bold text-danger">₹@Model.TotalOutstandingFines.ToString("N2")</div>
+            <div class="stat-card stat-danger">
+                <div class="stat-label">Outstanding Fines</div>
+                <div class="stat-value">₹@Model.TotalOutstandingFines.ToString("N2")</div>
             </div>
         </div>
     </div>
