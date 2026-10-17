@@ -1,33 +1,97 @@
-﻿@model List<LibraryReservationEngine.Web.Models.MyWaitlistEntryViewModel>
+@model List<LibraryReservationEngine.Web.Models.MyWaitlistEntryViewModel>
 
-<h2>My Waitlist</h2>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@{
+    ViewData["Title"] = "My Waitlist";
 }
 
-<table class="table">
-    <thead>
-        <tr><th>Book</th><th>Position</th><th>Joined</th><th></th></tr>
-    </thead>
-    <tbody>
-        @foreach (var e in Model)
-        {
-            <tr>
-                <td>@e.BookTitle</td>
-                <td>#@e.Position</td>
-                <td>@e.JoinedAt.ToLocalTime().ToString("g")</td>
-                <td>
-                    <form asp-action="Leave" asp-route-id="@e.Id" method="post" style="display:inline">
-                        <button type="submit">Leave Waitlist</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="label-caps">Queue Positions</span>
+            <h1 class="h2 mb-0">My Waitlist</h1>
+        </div>
+        <a asp-controller="Book" asp-action="Index" class="btn btn-outline-dark btn-sm">Browse Catalogue</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <!-- Empty state -->
+        <div class="card text-center p-5">
+            <div class="my-3">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#8A8F98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <h4 class="h5 mb-1">No active waitlist entries</h4>
+            <p class="text-muted small mb-3">When all copies of a book are reserved, you can join its queue to get first access when returned.</p>
+            <div>
+                <a asp-controller="Book" asp-action="Index" class="btn btn-primary btn-sm px-3">
+                    Browse Books
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Book</th>
+                            <th style="width: 25%;">Queue Position</th>
+                            <th style="width: 20%;">Joined</th>
+                            <th style="width: 15%;" class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            var progressPercent = Math.Clamp(100 - (e.Position - 1) * 20, 15, 100);
+
+                            <tr>
+                                <td class="fw-semibold text-dark">@e.BookTitle</td>
+                                <td>
+                                    <div style="max-width: 180px;">
+                                        <div class="fw-bold" style="font-size: 1.35rem; font-family: 'Playfair Display', Georgia, serif; color: var(--text-charcoal); line-height: 1;">
+                                            #@e.Position
+                                        </div>
+                                        <div class="queue-progress">
+                                            <div class="queue-progress-bar" style="width: @progressPercent%;"></div>
+                                        </div>
+                                        <span class="label-caps" style="font-size: 0.65rem;">Priority Rank</span>
+                                    </div>
+                                </td>
+                                <td class="small text-muted">@e.JoinedAt.ToLocalTime().ToString("MMM dd, yyyy · hh:mm tt")</td>
+                                <td class="text-end">
+                                    <form asp-action="Leave" asp-route-id="@e.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Leave waitlist for @e.BookTitle?');">
+                                            Leave Waitlist
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

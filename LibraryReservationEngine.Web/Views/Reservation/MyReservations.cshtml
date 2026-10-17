@@ -1,37 +1,103 @@
-﻿@model List<LibraryReservationEngine.Web.Models.MyReservationViewModel>
+@model List<LibraryReservationEngine.Web.Models.MyReservationViewModel>
 
-<h2>My Reservations</h2>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@{
+    ViewData["Title"] = "My Reservations";
 }
 
-<table class="table">
-    <thead>
-        <tr><th>Book</th><th>Status</th><th>Reserved On</th><th>Expires</th><th></th></tr>
-    </thead>
-    <tbody>
-        @foreach (var r in Model)
-        {
-            <tr>
-                <td>@r.BookTitle</td>
-                <td>@r.Status</td>
-                <td>@r.CreatedAt.ToLocalTime().ToString("g")</td>
-                <td>@(r.ExpiresAt?.ToLocalTime().ToString("g") ?? "-")</td>
-                <td>
-                    @if (r.Status == "Active" || r.Status == "Pending")
-                    {
-                        <form asp-action="Cancel" asp-route-id="@r.Id" method="post" style="display:inline">
-                            <button type="submit">Cancel</button>
-                        </form>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="label-caps">Member Activity</span>
+            <h1 class="h2 mb-0">My Reservations</h1>
+        </div>
+        <a asp-controller="Book" asp-action="Index" class="btn btn-outline-dark btn-sm">Browse Catalogue</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <!-- Empty State in Line Art -->
+        <div class="card text-center p-5">
+            <div class="my-3">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#8A8F98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                    <path d="M6 6h10"></path>
+                    <path d="M6 10h10"></path>
+                    <path d="m9 15 2 2 4-4"></path>
+                </svg>
+            </div>
+            <h4 class="h5 mb-1">No reservations yet</h4>
+            <p class="text-muted small mb-3">Browse our catalogue and place a hold on titles you wish to read.</p>
+            <div>
+                <a asp-controller="Book" asp-action="Index" class="btn btn-primary btn-sm px-3">
+                    Explore Books
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">Book</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 20%;">Reserved On</th>
+                            <th style="width: 20%;">Expires</th>
+                            <th style="width: 10%;" class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            var badgeClass = r.Status == "Active" || r.Status == "Pending" ? "badge-reserved" :
+                                             r.Status == "Fulfilled" ? "badge-available" : "badge-maintenance";
+
+                            <tr>
+                                <td class="fw-semibold text-dark">@r.BookTitle</td>
+                                <td>
+                                    <span class="badge @badgeClass">@r.Status</span>
+                                </td>
+                                <td class="small text-muted">@r.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy · hh:mm tt")</td>
+                                <td class="small">
+                                    @(r.ExpiresAt.HasValue ? r.ExpiresAt.Value.ToLocalTime().ToString("MMM dd, yyyy · hh:mm tt") : "—")
+                                </td>
+                                <td class="text-end">
+                                    @if (r.Status == "Active" || r.Status == "Pending")
+                                    {
+                                        <form asp-action="Cancel" asp-route-id="@r.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Cancel this reservation hold?');">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -1,31 +1,614 @@
+/* ==========================================================================
+   DESIGN SYSTEM: Library Reservation & Borrowing Engine
+   Color Palette:
+   - Page background: warm off-white #F5F3EE (never pure white)
+   - Dark sections and primary text: charcoal #1A1A1A (never pure black)
+   - Interactive accent: crimson red #D72638 (hover outlines, active nav line, overdue dots)
+   - Available badge: muted green #2F7D5B
+   - Reserved badge: amber #C98A1B
+   - Maintenance badge and secondary text: cool grey #8A8F98
+   ========================================================================== */
+
+:root {
+  --bg-page: #F5F3EE;
+  --bg-card: #FFFFFF;
+  --bg-card-offwhite: #FAF9F6;
+  --text-charcoal: #1A1A1A;
+  --text-secondary: #8A8F98;
+  --accent-crimson: #D72638;
+  --badge-available: #2F7D5B;
+  --badge-reserved: #C98A1B;
+  --badge-maintenance: #8A8F98;
+  --border-grey: #E2DFD8;
+  --border-divider: 1px solid #E2DFD8;
+  --radius-card: 8px;
+  --shadow-soft: 0 1px 3px rgba(26, 26, 26, 0.04), 0 4px 14px rgba(26, 26, 26, 0.03);
+  --shadow-hover: 0 4px 20px rgba(26, 26, 26, 0.08);
+
+  /* Bootstrap Variable Overrides */
+  --bs-body-bg: #F5F3EE;
+  --bs-body-color: #1A1A1A;
+  --bs-primary: #1A1A1A;
+  --bs-secondary: #8A8F98;
+  --bs-success: #2F7D5B;
+  --bs-warning: #C98A1B;
+  --bs-danger: #D72638;
+  --bs-light: #F5F3EE;
+  --bs-dark: #1A1A1A;
+  --bs-border-color: #E2DFD8;
+
+  /* Aliases for custom views */
+  --color-midnight: #1A1A1A;
+  --color-royal: #1A1A1A;
+  --color-orchid: #D72638;
+}
+
+/* Base & Typography */
 html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
+  font-size: 15px;
+  background-color: var(--bg-page);
+  color: var(--text-charcoal);
   min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+  background-color: var(--bg-page) !important;
+  color: var(--text-charcoal);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+main {
+  flex: 1 0 auto;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+h1, h2, h3, .font-editorial {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  color: var(--text-charcoal);
+  letter-spacing: -0.015em;
+}
+
+h4, h5, h6 {
+  color: var(--text-charcoal);
+  font-weight: 600;
+}
+
+a {
+  color: var(--text-charcoal);
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  color: var(--accent-crimson);
+}
+
+/* Small Uppercase Labels */
+.label-caps, .small-caps, th, .form-label.caps-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Dividers & Borders */
+hr, .border, .border-bottom, .border-top {
+  border-color: var(--border-grey) !important;
+}
+
+/* Cards */
+.card, .card-custom {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-grey);
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hover-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(26, 26, 26, 0.08) !important;
+  border-color: #C5C1B8 !important;
+}
+
+.card-offwhite {
+  background-color: var(--bg-card-offwhite);
+  border: 1px solid var(--border-grey);
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-grey);
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+.card-footer {
+  background-color: transparent;
+  border-top: 1px solid var(--border-grey);
+}
+
+/* ==========================================================================
+   Navigation Bar (Warm Off-white, Minimal, Fine Red Active Underline)
+   ========================================================================== */
+.site-navbar {
+  background-color: var(--bg-page) !important;
+  border-bottom: 1px solid var(--border-grey);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.site-navbar .navbar-brand {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-charcoal) !important;
+  letter-spacing: -0.02em;
+}
+
+.site-navbar .nav-link {
+  color: var(--text-charcoal) !important;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.5rem 0.85rem !important;
+  position: relative;
+  transition: color 0.15s ease;
+}
+
+.site-navbar .nav-link:hover {
+  color: var(--accent-crimson) !important;
+}
+
+/* Fine Crimson Underline for Active Nav Link */
+.site-navbar .nav-link.active,
+.site-navbar .nav-link.active-link {
+  color: var(--text-charcoal) !important;
+  font-weight: 600;
+}
+
+.site-navbar .nav-link.active::after,
+.site-navbar .nav-link.active-link::after {
+  content: '';
+  position: absolute;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: -0.25rem;
+  height: 2px;
+  background-color: var(--accent-crimson);
+  border-radius: 1px;
+}
+
+/* ==========================================================================
+   Buttons (Charcoal base, Sleek Crimson Red Hover Outline)
+   ========================================================================== */
+.btn {
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.45rem 1rem;
+  transition: all 0.15s ease-in-out;
+}
+
+/* Charcoal Primary Button */
+.btn-primary, .btn-charcoal {
+  background-color: var(--text-charcoal) !important;
+  color: #F5F3EE !important;
+  border: 1px solid var(--text-charcoal) !important;
+}
+
+.btn-primary:hover, .btn-charcoal:hover,
+.btn-primary:focus, .btn-charcoal:focus {
+  background-color: var(--text-charcoal) !important;
+  color: #FFFFFF !important;
+  border-color: var(--accent-crimson) !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+/* Outline Buttons */
+.btn-outline-dark, .btn-outline-charcoal, .btn-outline-secondary {
+  background-color: transparent !important;
+  color: var(--text-charcoal) !important;
+  border: 1px solid var(--border-grey) !important;
+}
+
+.btn-outline-dark:hover, .btn-outline-charcoal:hover, .btn-outline-secondary:hover {
+  background-color: #FFFFFF !important;
+  color: var(--text-charcoal) !important;
+  border-color: var(--accent-crimson) !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+.btn-outline-primary {
+  background-color: transparent !important;
+  color: var(--text-charcoal) !important;
+  border: 1px solid var(--text-charcoal) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--text-charcoal) !important;
+  color: #F5F3EE !important;
+  border-color: var(--accent-crimson) !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+/* Green Outline Issue Button (Librarian) */
+.btn-issue, .btn-outline-issue, .btn-outline-success {
+  background-color: transparent !important;
+  color: var(--badge-available) !important;
+  border: 1px solid var(--badge-available) !important;
+}
+
+.btn-issue:hover, .btn-outline-issue:hover, .btn-outline-success:hover {
+  background-color: var(--badge-available) !important;
+  color: #FFFFFF !important;
+  border-color: var(--badge-available) !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+.btn-success {
+  background-color: var(--badge-available) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--badge-available) !important;
+}
+
+.btn-success:hover, .btn-success:focus {
+  background-color: var(--badge-available) !important;
+  color: #FFFFFF !important;
+  border-color: var(--badge-available) !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+/* Danger / Cancel Button */
+.btn-danger, .btn-cancel {
+  background-color: transparent !important;
+  color: var(--accent-crimson) !important;
+  border: 1px solid var(--accent-crimson) !important;
+}
+
+.btn-danger:hover, .btn-cancel:hover {
+  background-color: var(--accent-crimson) !important;
+  color: #FFFFFF !important;
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: 1px;
+}
+
+.btn-sm {
+  padding: 0.28rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Focus outline */
+.form-control:focus, .form-select:focus {
+  border-color: var(--text-charcoal);
+  box-shadow: 0 0 0 1px var(--text-charcoal);
+  background-color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Badges (Exact Colors: Available #2F7D5B, Reserved #C98A1B, Maintenance #8A8F98)
+   ========================================================================== */
+.badge {
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.35em 0.65em;
+  border-radius: 4px;
+}
+
+/* Muted Green Available */
+.badge-available, .badge.bg-success, .badge.text-bg-success {
+  background-color: var(--badge-available) !important;
+  color: #FFFFFF !important;
+}
+
+/* Amber Reserved */
+.badge-reserved, .badge.bg-warning, .badge.text-bg-warning {
+  background-color: var(--badge-reserved) !important;
+  color: #FFFFFF !important;
+}
+
+/* Cool Grey Maintenance & Secondary */
+.badge-maintenance, .badge.bg-secondary, .badge.text-bg-secondary, .badge.bg-info, .badge.text-bg-info {
+  background-color: var(--badge-maintenance) !important;
+  color: #FFFFFF !important;
+}
+
+/* Charcoal Borrowed */
+.badge-borrowed, .badge.bg-dark, .badge.text-bg-dark, .badge.bg-primary, .badge.text-bg-primary {
+  background-color: var(--text-charcoal) !important;
+  color: #F5F3EE !important;
+}
+
+/* Crimson Red Overdue */
+.badge-overdue, .badge.bg-danger, .badge.text-bg-danger {
+  background-color: var(--accent-crimson) !important;
+  color: #FFFFFF !important;
+}
+
+/* Tiny Red Dot Marking Overdue Items */
+.overdue-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background-color: var(--accent-crimson);
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.text-overdue, .overdue-row .due-date {
+  color: var(--accent-crimson) !important;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+.table {
+  color: var(--text-charcoal);
+  border-color: var(--border-grey);
+}
+
+.table th {
+  background-color: #FAF9F6;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-grey);
+  padding: 0.85rem 1rem;
+}
+
+.table td {
+  border-bottom: 1px solid var(--border-grey);
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(26, 26, 26, 0.02) !important;
+}
+
+/* ==========================================================================
+   Alerts & Notifications
+   ========================================================================== */
+.alert {
+  border-radius: 6px;
+  font-size: 0.88rem;
+  border: 1px solid var(--border-grey);
+  padding: 0.85rem 1.25rem;
+}
+
+.alert-danger {
+  background-color: #FFF6F6 !important;
+  border-left: 3px solid var(--accent-crimson) !important;
+  border-color: rgba(215, 38, 56, 0.25);
+  color: var(--text-charcoal) !important;
+}
+
+.alert-success {
+  background-color: #F4F9F6 !important;
+  border-left: 3px solid var(--badge-available) !important;
+  border-color: rgba(47, 125, 91, 0.25);
+  color: var(--text-charcoal) !important;
+}
+
+.alert-info, .alert-warning {
+  background-color: #FFFBF4 !important;
+  border-left: 3px solid var(--badge-reserved) !important;
+  border-color: rgba(201, 138, 27, 0.25);
+  color: var(--text-charcoal) !important;
+}
+
+/* ==========================================================================
+   Forms & Editorial Underline Inputs
+   ========================================================================== */
+.form-control, .form-select {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-grey);
+  border-radius: 6px;
+  color: var(--text-charcoal);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.form-control::placeholder {
+  color: #A3A7AF;
+}
+
+/* Thin Underline-Style Input */
+.form-control-underline {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-grey) !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  color: var(--text-charcoal) !important;
+  font-size: 0.95rem;
+}
+
+.form-control-underline:focus {
+  border-bottom: 2px solid var(--text-charcoal) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Search Bar Component */
+.editorial-search-bar {
+  display: flex;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-grey);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.editorial-search-bar input {
+  border: none;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  flex: 1;
+  color: var(--text-charcoal);
+  font-size: 0.92rem;
+}
+
+.editorial-search-bar input:focus {
+  outline: none;
+}
+
+.editorial-search-bar button {
+  background-color: var(--text-charcoal);
+  color: #F5F3EE;
+  border: none;
+  padding: 0 1.5rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.editorial-search-bar button:hover {
+  background-color: var(--text-charcoal);
+  outline: 2px solid var(--accent-crimson);
+  outline-offset: -2px;
+}
+
+/* ==========================================================================
+   Stat Cards (Dashboard)
+   ========================================================================== */
+.stat-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-grey);
+  border-radius: 8px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease;
+}
+
+.stat-card .stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--text-charcoal);
+  line-height: 1.1;
+}
+
+.stat-card.stat-available {
+  border-top: 3px solid var(--badge-available);
+}
+.stat-card.stat-available .stat-value {
+  color: var(--badge-available);
+}
+
+.stat-card.stat-borrowed {
+  border-top: 3px solid var(--text-charcoal);
+}
+.stat-card.stat-borrowed .stat-value {
+  color: var(--text-charcoal);
+}
+
+.stat-card.stat-reserved {
+  border-top: 3px solid var(--badge-reserved);
+}
+.stat-card.stat-reserved .stat-value {
+  color: var(--badge-reserved);
+}
+
+.stat-card.stat-maintenance {
+  border-top: 3px solid var(--badge-maintenance);
+}
+.stat-card.stat-maintenance .stat-value {
+  color: var(--badge-maintenance);
+}
+
+.stat-card.stat-danger {
+  border-top: 3px solid var(--accent-crimson);
+}
+.stat-card.stat-danger .stat-value {
+  color: var(--accent-crimson);
+}
+
+
+
+/* ==========================================================================
+   Hero Banner (Landing / Home)
+   ========================================================================== */
+.editorial-hero {
+  background-color: var(--text-charcoal);
+  color: #F5F3EE;
+  border-radius: var(--radius-card);
+  padding: 4rem 3.5rem;
+  margin-bottom: 3.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.editorial-hero h1 {
+  color: #F5F3EE !important;
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+.editorial-hero p.lead {
+  color: #C7CBD1;
+  font-size: 1.15rem;
+  max-width: 580px;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Timeline Style Border (History) */
+.timeline-table {
+  border-left: 2px solid var(--border-grey);
+  padding-left: 0.5rem;
+}
+
+/* Queue Progress Bar */
+.queue-progress {
+  height: 4px;
+  background-color: var(--border-grey);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.queue-progress-bar {
+  height: 100%;
+  background-color: var(--text-charcoal);
+}
+
+/* Footer */
+.site-footer {
+  background-color: var(--bg-page);
+  border-top: 1px solid var(--border-grey);
+  padding: 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
 }

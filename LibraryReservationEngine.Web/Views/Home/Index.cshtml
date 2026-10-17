@@ -1,8 +1,287 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Campus Library Portal";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-3">
+    <!-- 1. Central Hero & Search Section (Warm Off-white canvas, clean charcoal typography) -->
+    <section class="text-center py-4 py-md-5 mb-4">
+        <div class="mx-auto" style="max-width: 780px;">
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill" style="background: #EAE6DF; border: 1px solid var(--border-grey);">
+                <span class="overdue-dot" style="background-color: var(--badge-available); margin-right: 0;"></span>
+                <span class="label-caps" style="color: var(--text-charcoal); font-size: 0.72rem; margin-bottom: 0;">Central Campus Library · Online Services</span>
+            </div>
+            
+            <h1 class="display-5 fw-bold mb-3" style="letter-spacing: -0.02em; color: var(--text-charcoal); line-height: 1.15;">
+                Campus Library Portal
+            </h1>
+            
+            <p class="lead mb-4 text-secondary mx-auto" style="font-size: 1.1rem; max-width: 620px; line-height: 1.6;">
+                Search available books, place instant holds before visiting the counter, and track your borrowed titles and return dates in one place.
+            </p>
+
+            <!-- Prominent, Intuitive Search Console -->
+            <div class="card p-2 p-md-3 mb-3 mx-auto" style="max-width: 680px; box-shadow: 0 4px 20px rgba(26,26,26,0.06); border: 1px solid var(--border-grey);">
+                <form asp-controller="Book" asp-action="Index" method="get" class="d-flex flex-column flex-sm-row gap-2">
+                    <div class="position-relative flex-grow-1">
+                        <i class="bi bi-search position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.95rem;"></i>
+                        <input type="text" 
+                               name="query" 
+                               class="form-control ps-5 py-2 border-0" 
+                               style="background: #FAF9F6; font-size: 0.95rem;" 
+                               placeholder="What book are you looking for? Title, author, or subject..." 
+                               aria-label="Search catalogue" />
+                    </div>
+                    <button type="submit" class="btn btn-primary px-4 py-2">
+                        Search Books
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Catalogue Link -->
+            <div class="pt-2 text-center" style="font-size: 0.85rem;">
+                <span class="text-secondary">Looking for something specific?</span>
+                <a asp-controller="Book" asp-action="Index" class="text-dark fw-semibold text-decoration-none ms-1">
+                    Browse the complete book catalogue &rarr;
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Four Quick Action Hubs (Intuitive Cards for What Users Need Most) -->
+    <section class="mb-5">
+        <div class="row g-3 g-md-4">
+            <!-- Hub 1: Browse Books -->
+            <div class="col-sm-6 col-lg-3">
+                <a asp-controller="Book" asp-action="Index" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                    <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                         style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.25rem;">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h5 class="h6 fw-bold mb-1">Browse Catalogue</h5>
+                    <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                        Search our collection and see physical copies ready on shelves.
+                    </p>
+                </a>
+            </div>
+
+            <!-- Hub 2: Reserve Online -->
+            <div class="col-sm-6 col-lg-3">
+                @if (User.IsInRole("Member"))
+                {
+                    <a asp-controller="Reservation" asp-action="MyReservations" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--badge-reserved); font-size: 1.25rem;">
+                            <i class="bi bi-bookmark-star"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">My Reservations</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Review your active book holds ready for pickup at the counter.
+                        </p>
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Book" asp-action="Index" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--badge-reserved); font-size: 1.25rem;">
+                            <i class="bi bi-bookmark-star"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">Hold a Book</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Place a 24-hour hold on available copies with one click.
+                        </p>
+                    </a>
+                }
+            </div>
+
+            <!-- Hub 3: Waitlists -->
+            <div class="col-sm-6 col-lg-3">
+                @if (User.IsInRole("Member"))
+                {
+                    <a asp-controller="Waitlist" asp-action="MyWaitlist" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.25rem;">
+                            <i class="bi bi-list-ol"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">My Waitlist</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Check your queue position for high-demand titles.
+                        </p>
+                    </a>
+                }
+                else
+                {
+                    <div class="card h-100 p-4 text-dark">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.25rem;">
+                            <i class="bi bi-list-ol"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">Queue & Waitlist</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Join the queue when copies are checked out; get next priority.
+                        </p>
+                    </div>
+                }
+            </div>
+
+            <!-- Hub 4: My Borrowings / Fines -->
+            <div class="col-sm-6 col-lg-3">
+                @if (User.IsInRole("Member"))
+                {
+                    <a asp-controller="Borrowing" asp-action="MyBorrowings" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--badge-available); font-size: 1.25rem;">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">My Borrowings</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Track current loans, return due dates, and fine balances.
+                        </p>
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="card h-100 p-4 text-decoration-none text-dark hover-lift">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded" 
+                             style="width: 44px; height: 44px; background: #FAF9F6; border: 1px solid var(--border-grey); color: var(--badge-available); font-size: 1.25rem;">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h5 class="h6 fw-bold mb-1">Student Account</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;">
+                            Sign in to reserve books and track your return deadlines.
+                        </p>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. How It Works (Clean, Highly Intuitive 3 Steps) -->
+    <section class="card p-4 p-md-5 mb-5 border-0" style="background: #FFFFFF; border: 1px solid var(--border-grey) !important;">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-7">
+                <span class="label-caps">Simple 3-Step Process</span>
+                <h2 class="h4 fw-bold mb-1">How Borrowing Works</h2>
+                <p class="text-muted small mb-0">Follow three easy steps from finding a book to reading on campus.</p>
+            </div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <a asp-controller="Book" asp-action="Index" class="btn btn-outline-dark btn-sm">
+                    Open Book Catalogue &rarr;
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4 pt-2">
+            <!-- Step 1 -->
+            <div class="col-md-4">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 36px; height: 36px; background: var(--text-charcoal); color: #F5F3EE; font-weight: 700; font-size: 0.95rem; flex-shrink: 0;">
+                        1
+                    </div>
+                    <div>
+                        <h5 class="h6 fw-bold mb-1">Search & Check Copies</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.55;">
+                            Look up any textbook or reference material. The system shows exact copy codes and if they are on shelves.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="col-md-4">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 36px; height: 36px; background: var(--text-charcoal); color: #F5F3EE; font-weight: 700; font-size: 0.95rem; flex-shrink: 0;">
+                        2
+                    </div>
+                    <div>
+                        <h5 class="h6 fw-bold mb-1">Reserve Online</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.55;">
+                            Click "Reserve this Book" to place an instant 24-hour hold. The library sets it aside so no one else can take it.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="col-md-4">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 36px; height: 36px; background: var(--text-charcoal); color: #F5F3EE; font-weight: 700; font-size: 0.95rem; flex-shrink: 0;">
+                        3
+                    </div>
+                    <div>
+                        <h5 class="h6 fw-bold mb-1">Pick Up & Read</h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.55;">
+                            Visit the circulation desk with your Student ID. The librarian scans your copy and gives you 14 days to study.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- 5. Essential Library Info Bar (Reassuring Rules & Contact) -->
+    <section class="card p-4 p-md-4 mb-3 border-0" style="background: #FAF9F6; border: 1px solid var(--border-grey) !important;">
+        <div class="row g-4 align-items-center">
+            <div class="col-md-4 border-end-md">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 38px; height: 38px; background: #FFFFFF; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.1rem; flex-shrink: 0;">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block" style="font-size: 0.9rem;">24-Hour Hold Window</strong>
+                        <small class="text-muted">Reservations are held for 24h before being released.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 border-end-md">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 38px; height: 38px; background: #FFFFFF; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.1rem; flex-shrink: 0;">
+                        <i class="bi bi-calendar-range"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block" style="font-size: 0.9rem;">14-Day Standard Loan</strong>
+                        <small class="text-muted">Enjoy a 2-week reading period with easy online renewal.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded" 
+                         style="width: 38px; height: 38px; background: #FFFFFF; border: 1px solid var(--border-grey); color: var(--text-charcoal); font-size: 1.1rem; flex-shrink: 0;">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block" style="font-size: 0.9rem;">Circulation Counter</strong>
+                        <small class="text-muted">Mon–Fri: 9:00 AM – 5:00 PM · Central Library Ground Floor.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Friendly Account Callout for Logged Out Students -->
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <section class="text-center py-4 px-3 my-4 rounded" style="background: #FFFFFF; border: 1px solid var(--border-grey);">
+            <h5 class="h6 fw-bold mb-1">Are you a registered student or faculty member?</h5>
+            <p class="text-muted small mb-3">Sign in with your campus account to reserve books online and track your borrowings.</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm px-4 py-2">
+                    Student Login
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-dark btn-sm px-4 py-2">
+                    Create Account
+                </a>
+            </div>
+        </section>
+    }
 </div>
