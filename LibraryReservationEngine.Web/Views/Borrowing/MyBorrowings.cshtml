@@ -4,23 +4,28 @@
     ViewData["Title"] = "My Borrowings";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Borrowings</h2>
-        <a asp-controller="Book" asp-action="Index" class="btn btn-outline-secondary">Browse Catalogue</a>
+<div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="label-caps">Loan History</span>
+            <h1 class="h2 mb-0">My Borrowings</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Fine" asp-action="MyFines" class="btn btn-outline-dark btn-sm">My Fines</a>
+            <a asp-controller="Book" asp-action="Index" class="btn btn-outline-dark btn-sm">Browse Catalogue</a>
+        </div>
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             @TempData["Success"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             @TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -28,69 +33,95 @@
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">
-            <h5 class="alert-heading">No Borrowing History</h5>
-            <p class="mb-0">You currently have no active or previous borrowing records.</p>
+        <div class="card text-center p-5">
+            <div class="my-3">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#8A8F98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+            </div>
+            <h4 class="h5 mb-1">No borrowing history</h4>
+            <p class="text-muted small mb-3">You currently have no active or completed borrowing records.</p>
+            <div>
+                <a asp-controller="Book" asp-action="Index" class="btn btn-primary btn-sm px-3">
+                    Browse Catalogue
+                </a>
+            </div>
         </div>
     }
     else
     {
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Book Title</th>
-                                <th>Copy Code</th>
-                                <th>Issued On</th>
-                                <th>Due Date</th>
-                                <th>Returned On</th>
-                                <th>Status</th>
+        <div class="card p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Book</th>
+                            <th style="width: 12%;">Copy</th>
+                            <th style="width: 14%;">Issued</th>
+                            <th style="width: 15%;">Due Date</th>
+                            <th style="width: 14%;">Returned</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 10%;" class="text-end">Fine (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var isOverdue = item.Status == "Overdue" || (item.Status == "Active" && item.DueDate < DateTime.UtcNow);
+                            var overdueDays = isOverdue ? Math.Max(1, (int)(DateTime.UtcNow - item.DueDate).TotalDays) : 0;
+                            var estimatedFine = overdueDays * 10.0m;
+
+                            <tr class="@(isOverdue ? "overdue-row" : "")">
+                                <td class="fw-semibold text-dark">
+                                    @if (isOverdue)
+                                    {
+                                        <span class="overdue-dot" title="Overdue item"></span>
+                                    }
+                                    @item.BookTitle
+                                </td>
+                                <td><code>@item.CopyCode</code></td>
+                                <td class="small text-muted">@item.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <span class="@(isOverdue ? "text-overdue" : "text-dark small")">
+                                        @item.DueDate.ToLocalTime().ToString("MMM dd, yyyy")
+                                    </span>
+                                </td>
+                                <td class="small text-muted">
+                                    @(item.ReturnedAt.HasValue ? item.ReturnedAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")
+                                </td>
+                                <td>
+                                    @if (isOverdue)
+                                    {
+                                        <span class="badge badge-overdue">Overdue</span>
+                                    }
+                                    else if (item.Status == "Returned")
+                                    {
+                                        <span class="badge badge-available">Returned</span>
+                                    }
+                                    else if (item.Status == "Active")
+                                    {
+                                        <span class="badge badge-borrowed">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-maintenance">@item.Status</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-semibold @(isOverdue ? "text-danger" : "text-muted small")">
+                                    @if (isOverdue)
+                                    {
+                                        <span>₹@estimatedFine.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>₹0.00</span>
+                                    }
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="fw-semibold">@item.BookTitle</td>
-                                    <td><code>@item.CopyCode</code></td>
-                                    <td>@item.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
-                                    <td>
-                                        <span class="@(item.Status == "Active" && item.DueDate < DateTime.UtcNow ? "text-danger fw-bold" : "")">
-                                            @item.DueDate.ToLocalTime().ToString("MMM dd, yyyy")
-                                        </span>
-                                    </td>
-                                    <td>@(item.ReturnedAt.HasValue ? item.ReturnedAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")</td>
-                                    <td>
-                                        @switch (item.Status)
-                                        {
-                                            case "Active":
-                                                if (item.DueDate < DateTime.UtcNow)
-                                                {
-                                                    <span class="badge bg-danger">Overdue</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-primary">Active</span>
-                                                }
-                                                break;
-                                            case "Returned":
-                                                <span class="badge bg-success">Returned</span>
-                                                break;
-                                            case "Overdue":
-                                                <span class="badge bg-danger">Overdue</span>
-                                                break;
-                                            default:
-                                                <span class="badge bg-secondary">@item.Status</span>
-                                                break;
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     }

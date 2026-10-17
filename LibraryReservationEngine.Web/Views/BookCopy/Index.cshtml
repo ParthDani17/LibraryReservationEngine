@@ -1,62 +1,117 @@
-﻿@model LibraryReservationEngine.Web.Models.BookCopyListViewModel
+@model LibraryReservationEngine.Web.Models.BookCopyListViewModel
 
-<h2>Manage Copies — @Model.BookTitle</h2>
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
+@{
+    ViewData["Title"] = $"Manage Copies — {Model.BookTitle}";
 }
 
-<form asp-action="Add" method="post" class="mb-3">
-    <input type="hidden" name="BookId" value="@Model.BookId" />
-    <input type="text" name="CopyCode" placeholder="e.g. CLN-004" required />
-    <button type="submit">+ Add Copy</button>
-</form>
+<div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="label-caps">Inventory Control</span>
+            <h1 class="h2 mb-0">Manage Copies: @Model.BookTitle</h1>
+        </div>
+        <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="btn btn-outline-dark btn-sm">
+            &larr; Back to Book Details
+        </a>
+    </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Copy Code</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var copy in Model.Copies)
-        {
-            <tr>
-                <td>@copy.CopyCode</td>
-                <td>@copy.Status</td>
-                <td>
-                    @if (copy.Status == "Available")
+    <!-- Red-bordered alert banner area for errors -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <span>@TempData["Error"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Inline Form with Copy-Code Input and Charcoal Button -->
+    <div class="card p-3 mb-4">
+        <span class="label-caps mb-2 d-block">Register New Copy</span>
+        <form asp-action="Add" method="post" class="d-flex flex-wrap gap-2 align-items-center">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="BookId" value="@Model.BookId" />
+            <div style="flex: 1; max-width: 320px;">
+                <input type="text" name="CopyCode" placeholder="e.g. CLN-004" required class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">
+                + Add Copy
+            </button>
+        </form>
+    </div>
+
+    <!-- Copies Table with Status Badges and Row Actions -->
+    <div class="card p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Copy Code</th>
+                        <th style="width: 30%;">Status</th>
+                        <th style="width: 35%;" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Copies.Any())
                     {
-                        <form asp-action="SetMaintenance" method="post" style="display:inline">
-                            <input type="hidden" name="id" value="@copy.Id" />
-                            <input type="hidden" name="bookId" value="@Model.BookId" />
-                            <button type="submit">Set Maintenance</button>
-                        </form>
-                        <form asp-action="Delete" method="post" style="display:inline">
-                            <input type="hidden" name="id" value="@copy.Id" />
-                            <input type="hidden" name="bookId" value="@Model.BookId" />
-                            <button type="submit">Delete</button>
-                        </form>
-                    }
-                    else if (copy.Status == "Maintenance")
-                    {
-                        <form asp-action="SetAvailable" method="post" style="display:inline">
-                            <input type="hidden" name="id" value="@copy.Id" />
-                            <input type="hidden" name="bookId" value="@Model.BookId" />
-                            <button type="submit">Mark Available</button>
-                        </form>
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                No physical copies registered yet for this title.
+                            </td>
+                        </tr>
                     }
                     else
                     {
-                        <span>(currently @copy.Status.ToLower() — no actions available)</span>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                        @foreach (var copy in Model.Copies)
+                        {
+                            var badgeClass = copy.Status == "Available" ? "badge-available" :
+                                             copy.Status == "Reserved" ? "badge-reserved" :
+                                             copy.Status == "Maintenance" ? "badge-maintenance" : "badge-borrowed";
 
-<a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId">Back to Book Details</a>
+                            <tr>
+                                <td>
+                                    <code class="fw-semibold text-dark" style="font-size: 0.95rem;">@copy.CopyCode</code>
+                                </td>
+                                <td>
+                                    <span class="badge @badgeClass">@copy.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    @if (copy.Status == "Available")
+                                    {
+                                        <div class="d-inline-flex gap-2">
+                                            <form asp-action="SetMaintenance" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@copy.Id" />
+                                                <input type="hidden" name="bookId" value="@Model.BookId" />
+                                                <button type="submit" class="btn btn-outline-dark btn-sm">Set Maintenance</button>
+                                            </form>
+                                            <form asp-action="Delete" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@copy.Id" />
+                                                <input type="hidden" name="bookId" value="@Model.BookId" />
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete copy @copy.CopyCode?');">Delete</button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else if (copy.Status == "Maintenance")
+                                    {
+                                        <form asp-action="SetAvailable" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@copy.Id" />
+                                            <input type="hidden" name="bookId" value="@Model.BookId" />
+                                            <button type="submit" class="btn btn-outline-success btn-sm">Mark Available</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted fst-italic">Active in circulation</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

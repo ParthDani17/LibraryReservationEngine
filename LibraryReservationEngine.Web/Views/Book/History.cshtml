@@ -1,38 +1,73 @@
-﻿@model List<LibraryReservationEngine.Web.Models.BookBorrowHistoryViewModel>
+@model List<LibraryReservationEngine.Web.Models.BookBorrowHistoryViewModel>
 
-<h2>Borrow History — @ViewData["BookTitle"]</h2>
-
-@if (!Model.Any())
-{
-    <p>No borrowing history yet for this book.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Student</th>
-                <th>Copy</th>
-                <th>Issued</th>
-                <th>Due</th>
-                <th>Returned</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var h in Model)
-            {
-                <tr>
-                    <td>@h.StudentName</td>
-                    <td>@h.CopyCode</td>
-                    <td>@h.IssuedAt.ToLocalTime().ToString("d")</td>
-                    <td>@h.DueDate.ToLocalTime().ToString("d")</td>
-                    <td>@(h.ReturnedAt?.ToLocalTime().ToString("d") ?? "Not returned")</td>
-                    <td>@h.Status</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+@{
+    ViewData["Title"] = $"Borrow History — {ViewData["BookTitle"]}";
 }
 
-<a asp-action="Details" asp-route-id="@ViewData["BookId"]">Back to Book Details</a>
+<div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="label-caps">Audit & Circulation Trail</span>
+            <h1 class="h2 mb-0">Borrow History: @ViewData["BookTitle"]</h1>
+        </div>
+        <a asp-action="Details" asp-route-id="@ViewData["BookId"]" class="text-muted small text-decoration-none">
+            &larr; Back to Book Details
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card text-center p-5">
+            <h4 class="h5 mb-1 text-muted">No borrowing history yet for this book.</h4>
+            <p class="text-muted small mb-0">Historical loans and circulation logs will be displayed here as students borrow copies.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card p-0 timeline-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Student</th>
+                            <th style="width: 15%;">Copy</th>
+                            <th style="width: 15%;">Issued</th>
+                            <th style="width: 15%;">Due</th>
+                            <th style="width: 15%;">Returned</th>
+                            <th style="width: 15%;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in Model)
+                        {
+                            var isOut = !h.ReturnedAt.HasValue;
+                            var badgeClass = h.Status == "Returned" ? "badge-available" :
+                                             h.Status == "Active" ? "badge-borrowed" :
+                                             h.Status == "Overdue" ? "badge-overdue" : "badge-maintenance";
+
+                            <tr>
+                                <td class="fw-semibold text-dark">@h.StudentName</td>
+                                <td><code>@h.CopyCode</code></td>
+                                <td class="small text-muted">@h.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                <td class="small text-muted">@h.DueDate.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                <td class="small">
+                                    @if (isOut || !h.ReturnedAt.HasValue)
+                                    {
+                                        <span class="text-secondary fst-italic">Not returned</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@h.ReturnedAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @badgeClass">@h.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
