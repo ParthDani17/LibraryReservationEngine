@@ -14,12 +14,16 @@ namespace LibraryReservationEngine.Infrastructure.Services
 
         private const decimal DailyOverdueRate = 5.00m; // ₹5.00 per day
 
+        private readonly Microsoft.Extensions.Logging.ILogger<FineService> _logger;
+
         public FineService(
             ApplicationDbContext context,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            Microsoft.Extensions.Logging.ILogger<FineService>? logger = null)
         {
             _context = context;
             _notificationService = notificationService;
+            _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<FineService>.Instance;
         }
 
         public async Task<decimal> CalculateFineAsync(int borrowingId)

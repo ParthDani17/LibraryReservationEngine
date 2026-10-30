@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <div class="card shadow-sm border-0 p-4 p-md-5">
+                <div class="mb-3 text-danger">
+                    <i class="bi bi-shield-lock" style="font-size: 3.5rem;"></i>
+                </div>
+                <div class="badge bg-danger-subtle text-danger fw-semibold px-3 py-2 rounded-pill mx-auto mb-3">403 Forbidden</div>
+                <h1 class="h3 fw-bold mb-2">Access Restricted</h1>
+                <p class="text-muted mb-4">
+                    You do not have permission to access this area or resource. This page requires elevated privileges (such as Librarian access).
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-4">
+                        <i class="bi bi-house-door me-1"></i> Return Home
+                    </a>
+                    <a asp-controller="Book" asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-book me-1"></i> View Catalogue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

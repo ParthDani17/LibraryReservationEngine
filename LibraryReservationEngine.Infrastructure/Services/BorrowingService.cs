@@ -15,18 +15,22 @@ namespace LibraryReservationEngine.Infrastructure.Services
         private readonly IFineService _fineService;
         private readonly INotificationService _notificationService;
 
+        private readonly Microsoft.Extensions.Logging.ILogger<BorrowingService> _logger;
+
         public BorrowingService(
             ApplicationDbContext context,
             IBookCopyService bookCopyService,
             IWaitlistService waitlistService,
             IFineService fineService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            Microsoft.Extensions.Logging.ILogger<BorrowingService>? logger = null)
         {
             _context = context;
             _bookCopyService = bookCopyService;
             _waitlistService = waitlistService;
             _fineService = fineService;
             _notificationService = notificationService;
+            _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<BorrowingService>.Instance;
         }
 
         public async Task<Result> IssueBookAsync(int reservationId)
@@ -155,6 +159,7 @@ namespace LibraryReservationEngine.Infrastructure.Services
             // 1. Find the borrowing record
             var borrowing = await _context.Borrowings
                 .Include(b => b.BookCopy)
+                    .ThenInclude(c => c!.Book)
                 .FirstOrDefaultAsync(b => b.Id == borrowingId);
 
             if (borrowing is null)
@@ -292,6 +297,38 @@ namespace LibraryReservationEngine.Infrastructure.Services
                     Status = b.Status.ToString()
                 })
                 .ToListAsync();
+        }
+
+        public async Task<int> SendOverdueRemindersAsync()
+        {
+            var now = DateTime.UtcNow;
+            var overdueBorrowings = await _context.Borrowings
+                .Include(b => b.BookCopy)
+                    .ThenInclude(c => c!.Book)
+                .Where(b => (b.Status == BorrowingStatus.Active || b.Status == BorrowingStatus.Overdue) && b.DueDate < now)
+                .ToListAsync();
+
+            int sentCount = 0;
+            foreach (var borrowing in overdueBorrowings)
+            {
+                var recentReminderExists = await _context.Notifications.AnyAsync(n =>
+                    n.UserId == borrowing.UserId &&
+                    n.Type == NotificationType.OverdueReminder &&
+                    n.CreatedAt >= now.AddHours(-24));
+
+                if (!recentReminderExists)
+                {
+                    var bookTitle = borrowing.BookCopy?.Book?.Title ?? "your borrowed book";
+                    int overdueDays = Math.Max(1, (int)(now.Date - borrowing.DueDate.Date).TotalDays);
+                    await _notificationService.SendAsync(
+                        borrowing.UserId,
+                        NotificationType.OverdueReminder,
+                        $"Reminder: Book '{bookTitle}' is overdue by {overdueDays} day(s). Please return it to avoid additional fines.");
+                    sentCount++;
+                }
+            }
+
+            return sentCount;
         }
     }
 }

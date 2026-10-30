@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Application.Common;
+using LibraryReservationEngine.Application.Common;
 using LibraryReservationEngine.Application.Interfaces;
 using LibraryReservationEngine.Domain.Enums;
 using LibraryReservationEngine.Infrastructure.Data;
@@ -37,7 +37,7 @@ namespace LibraryReservationEngine.Infrastructure.Services
                     .CountAsync(w => w.Status == WaitlistStatus.Waiting),
 
                 OverdueBorrowings = await _context.Borrowings
-                    .CountAsync(b => b.Status == BorrowingStatus.Overdue),
+                    .CountAsync(b => (b.Status == BorrowingStatus.Overdue || b.Status == BorrowingStatus.Active) && b.DueDate < DateTime.UtcNow),
 
                 TotalOutstandingFines = await _context.Fines
                     .Where(f => f.Status == FineStatus.Unpaid)

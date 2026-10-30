@@ -66,33 +66,27 @@
                                     <td><code>@item.CopyCode</code></td>
                                     <td>@item.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                     <td>
-                                        <span class="@(item.Status == "Active" && item.DueDate < DateTime.UtcNow ? "text-danger fw-bold" : "")">
+                                        <span class="@(item.IsOverdue ? "text-danger fw-bold" : "")">
                                             @item.DueDate.ToLocalTime().ToString("MMM dd, yyyy")
                                         </span>
                                     </td>
                                     <td>@(item.ReturnedAt.HasValue ? item.ReturnedAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "—")</td>
                                     <td>
-                                        @switch (item.Status)
+                                        @if (item.IsOverdue)
                                         {
-                                            case "Active":
-                                                if (item.DueDate < DateTime.UtcNow)
-                                                {
-                                                    <span class="badge bg-danger">Overdue</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-primary">Active</span>
-                                                }
-                                                break;
-                                            case "Returned":
-                                                <span class="badge bg-success">Returned</span>
-                                                break;
-                                            case "Overdue":
-                                                <span class="badge bg-danger">Overdue</span>
-                                                break;
-                                            default:
-                                                <span class="badge bg-secondary">@item.Status</span>
-                                                break;
+                                            <span class="badge bg-danger">Overdue</span>
+                                        }
+                                        else if (item.Status == "Active")
+                                        {
+                                            <span class="badge bg-primary">Active</span>
+                                        }
+                                        else if (item.Status == "Returned")
+                                        {
+                                            <span class="badge bg-success">Returned</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@item.Status</span>
                                         }
                                     </td>
                                     <td class="text-end">

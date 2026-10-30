@@ -9,5 +9,6 @@ namespace LibraryReservationEngine.Application.Interfaces
         Task<IEnumerable<ReservationSummaryDto>> GetMyReservationsAsync(string userId);
         Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsAsync();
         Task<IEnumerable<ReservationSummaryDto>> GetActiveReservationsForBookAsync(int bookId);
+        Task<int> ExpireOverdueReservationsAsync();
     }
 }

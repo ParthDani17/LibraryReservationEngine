@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Domain.Entities;
+using LibraryReservationEngine.Domain.Entities;
 using LibraryReservationEngine.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,24 +7,28 @@ namespace LibraryReservationEngine.Web.Controllers
 {
     public class AccountController : Controller
     {
-        // This is the dependencies that is provided by .NET inbuilt we have to just inject it.
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AccountController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
 
-        // get /Account/Register
+        // GET /Account/Register
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
-        // post /Account/Register
+        // POST /Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -34,27 +38,35 @@ namespace LibraryReservationEngine.Web.Controllers
                 return View(model);
             }
 
-            var user = new ApplicationUser
+            try
             {
-                FullName = model.FullName,
-                UserName = model.Email,
-                Email = model.Email
-            };
+                var user = new ApplicationUser
+                {
+                    FullName = model.FullName,
+                    UserName = model.Email,
+                    Email = model.Email
+                };
 
-            var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await _userManager.CreateAsync(user, model.Password);
 
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Member");
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("New user registered successfully with email {Email}.", model.Email);
 
-            if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(user, "Member");
-                await _signInManager.SignInAsync(user, isPersistent: false);
+                    return RedirectToAction("Index", "Home");
+                }
 
-                return RedirectToAction("Index", "Home");
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
             }
-
-            foreach (var error in result.Errors)
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                _logger.LogError(ex, "Unexpected error during registration for {Email}.", model.Email);
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred during registration.");
             }
 
             return View(model);
@@ -80,39 +92,49 @@ namespace LibraryReservationEngine.Web.Controllers
                 return View(model);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                model.Email,
-                model.Password,
-                model.RememberMe,
-                lockoutOnFailure: false);
-
-            if (result.Succeeded)
+            try
             {
-                if (!string.IsNullOrEmpty(returnUrl) &&
-                    Url.IsLocalUrl(returnUrl))
+                var result = await _signInManager.PasswordSignInAsync(
+                    model.Email,
+                    model.Password,
+                    model.RememberMe,
+                    lockoutOnFailure: false);
+
+                if (result.Succeeded)
                 {
-                    return Redirect(returnUrl);
+                    _logger.LogInformation("User {Email} logged in successfully.", model.Email);
+
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    var user = await _userManager.FindByEmailAsync(model.Email);
+                    if (user != null)
+                    {
+                        var roles = await _userManager.GetRolesAsync(user);
+
+                        if (roles.Contains("Librarian"))
+                        {
+                            return RedirectToAction("Index", "Dashboard");
+                        }
+                        else if (roles.Contains("Member"))
+                        {
+                            return RedirectToAction("Index", "Book");
+                        }
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
 
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user != null)
-                {
-                    var roles = await _userManager.GetRolesAsync(user);
-
-                    if (roles.Contains("Librarian"))
-                    {
-                        return RedirectToAction("Index", "Dashboard");
-                    }
-                    else if (roles.Contains("Member"))
-                    {
-                        return RedirectToAction("Index", "Book");
-                    }
-                }
+                _logger.LogWarning("Failed login attempt for {Email}.", model.Email);
+                ModelState.AddModelError(string.Empty, "Invalid email or password.");
             }
-
-            ModelState.AddModelError(
-                string.Empty,
-                "Invalid email or password.");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing login for {Email}.", model.Email);
+                ModelState.AddModelError(string.Empty, "An error occurred during sign in. Please try again.");
+            }
 
             return View(model);
         }
@@ -123,7 +145,7 @@ namespace LibraryReservationEngine.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-
+            _logger.LogInformation("User logged out.");
             return RedirectToAction("Index", "Home");
         }
 
@@ -131,11 +153,7 @@ namespace LibraryReservationEngine.Web.Controllers
         [HttpGet]
         public IActionResult AccessDenied()
         {
-            return View();
-        }
-        public IActionResult Index()
-        {
-            return View();
+            return View("~/Views/Shared/AccessDenied.cshtml");
         }
     }
 }

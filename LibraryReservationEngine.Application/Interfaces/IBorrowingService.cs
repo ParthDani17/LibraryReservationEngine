@@ -10,5 +10,6 @@ namespace LibraryReservationEngine.Application.Interfaces
         Task<Result> ReturnBookAsync(int borrowingId);
         Task<IEnumerable<BorrowingSummaryDto>> GetMyBorrowingsAsync(string userId);
         Task<IEnumerable<BorrowingSummaryDto>> GetAllBorrowingsAsync();
+        Task<int> SendOverdueRemindersAsync();
     }
 }
