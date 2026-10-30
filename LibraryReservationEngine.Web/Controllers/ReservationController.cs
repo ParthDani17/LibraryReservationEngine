@@ -12,11 +12,16 @@ namespace LibraryReservationEngine.Web.Controllers
     {
         private readonly IReservationService _reservationService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<ReservationController> _logger;
 
-        public ReservationController(IReservationService reservationService, UserManager<ApplicationUser> userManager)
+        public ReservationController(
+            IReservationService reservationService,
+            UserManager<ApplicationUser> userManager,
+            ILogger<ReservationController> logger)
         {
             _reservationService = reservationService;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // GET /Reservation (Librarian active reservation queue)
@@ -24,8 +29,17 @@ namespace LibraryReservationEngine.Web.Controllers
         [Authorize(Roles = "Librarian")]
         public async Task<IActionResult> Index()
         {
-            var reservations = await _reservationService.GetActiveReservationsAsync();
-            return View(reservations);
+            try
+            {
+                var reservations = await _reservationService.GetActiveReservationsAsync();
+                return View(reservations);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading active reservations queue.");
+                TempData["Error"] = "Unable to load active reservations.";
+                return View(Enumerable.Empty<Application.Common.ReservationSummaryDto>());
+            }
         }
 
         // POST /Reservation/Create
@@ -35,9 +49,26 @@ namespace LibraryReservationEngine.Web.Controllers
         public async Task<IActionResult> Create(int bookId)
         {
             var userId = _userManager.GetUserId(User)!;
-            var result = await _reservationService.CreateReservationAsync(userId, bookId);
+            try
+            {
+                var result = await _reservationService.CreateReservationAsync(userId, bookId);
+                if (result.Success)
+                {
+                    _logger.LogInformation("Reservation created by user {UserId} for book {BookId}.", userId, bookId);
+                    TempData["Success"] = result.Message;
+                }
+                else
+                {
+                    _logger.LogWarning("Reservation creation failed for user {UserId}, book {BookId}: {Reason}", userId, bookId, result.Message);
+                    TempData["Error"] = result.Message;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error creating reservation for user {UserId}, book {BookId}.", userId, bookId);
+                TempData["Error"] = "An unexpected error occurred while placing your reservation.";
+            }
 
-            TempData[result.Success ? "Success" : "Error"] = result.Message;
             return RedirectToAction("Details", "Book", new { id = bookId });
         }
 
@@ -45,18 +76,27 @@ namespace LibraryReservationEngine.Web.Controllers
         public async Task<IActionResult> MyReservations()
         {
             var userId = _userManager.GetUserId(User)!;
-            var reservations = await _reservationService.GetMyReservationsAsync(userId);
-
-            var models = reservations.Select(r => new MyReservationViewModel
+            try
             {
-                Id = r.Id,
-                BookTitle = r.BookTitle,
-                Status = r.Status,
-                CreatedAt = r.CreatedAt,
-                ExpiresAt = r.ExpiresAt
-            }).ToList();
+                var reservations = await _reservationService.GetMyReservationsAsync(userId);
 
-            return View(models);
+                var models = reservations.Select(r => new MyReservationViewModel
+                {
+                    Id = r.Id,
+                    BookTitle = r.BookTitle,
+                    Status = r.Status,
+                    CreatedAt = r.CreatedAt,
+                    ExpiresAt = r.ExpiresAt
+                }).ToList();
+
+                return View(models);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching reservations for user {UserId}.", userId);
+                TempData["Error"] = "Unable to load your reservations.";
+                return View(new List<MyReservationViewModel>());
+            }
         }
 
         // POST /Reservation/Cancel/5
@@ -65,9 +105,26 @@ namespace LibraryReservationEngine.Web.Controllers
         public async Task<IActionResult> Cancel(int id)
         {
             var userId = _userManager.GetUserId(User)!;
-            var result = await _reservationService.CancelReservationAsync(id, userId);
+            try
+            {
+                var result = await _reservationService.CancelReservationAsync(id, userId);
+                if (result.Success)
+                {
+                    _logger.LogInformation("Reservation {ReservationId} cancelled by user {UserId}.", id, userId);
+                    TempData["Success"] = result.Message;
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to cancel reservation {ReservationId} by user {UserId}: {Reason}", id, userId, result.Message);
+                    TempData["Error"] = result.Message;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error cancelling reservation {ReservationId} for user {UserId}.", id, userId);
+                TempData["Error"] = "An error occurred while cancelling your reservation.";
+            }
 
-            TempData[result.Success ? "Success" : "Error"] = result.Message;
             return RedirectToAction(nameof(MyReservations));
         }
     }

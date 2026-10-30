@@ -1,4 +1,4 @@
-﻿using LibraryReservationEngine.Application.Interfaces;
+using LibraryReservationEngine.Application.Interfaces;
 using LibraryReservationEngine.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,35 +8,58 @@ namespace LibraryReservationEngine.Web.Controllers
     public class BookController : Controller
     {
         private readonly IBookService _bookService;
+        private readonly ILogger<BookController> _logger;
 
-        public BookController(IBookService bookService)
+        public BookController(IBookService bookService, ILogger<BookController> logger)
         {
             _bookService = bookService;
+            _logger = logger;
         }
 
         // GET /Book
         public async Task<IActionResult> Index(string? query)
         {
-            var books = await _bookService.SearchBooksAsync(query);
-            var viewModels = books.Select(b => new BookListItemViewModel
+            try
             {
-                Id = b.Id,
-                Title = b.Title,
-                AuthorName = b.Author?.Name ?? "",
-                CategoryName = b.Category?.Name ?? "",
-                AvailableCopies = b.BookCopies.Count(c => c.Status == Domain.Enums.BookCopyStatus.Available),
-                TotalCopies = b.BookCopies.Count
-            });
-            ViewData["Query"] = query;
-            return View(viewModels);
+                var books = await _bookService.SearchBooksAsync(query);
+                var viewModels = books.Select(b => new BookListItemViewModel
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    AuthorName = b.Author?.Name ?? "",
+                    CategoryName = b.Category?.Name ?? "",
+                    AvailableCopies = b.BookCopies.Count(c => c.Status == Domain.Enums.BookCopyStatus.Available),
+                    TotalCopies = b.BookCopies.Count
+                });
+                ViewData["Query"] = query;
+                return View(viewModels);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while searching books with query '{Query}'.", query);
+                TempData["Error"] = "Unable to load book catalogue.";
+                return View(Enumerable.Empty<BookListItemViewModel>());
+            }
         }
 
         // GET /Book/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var book = await _bookService.GetBookDetailsAsync(id);
-            if (book is null) return NotFound();
-            return View(book);
+            try
+            {
+                var book = await _bookService.GetBookDetailsAsync(id);
+                if (book is null)
+                {
+                    _logger.LogWarning("Book details requested for non-existent id {BookId}.", id);
+                    return NotFound();
+                }
+                return View(book);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving book details for id {BookId}.", id);
+                return View("NotFound");
+            }
         }
 
         // GET /Book/Create
@@ -51,8 +74,18 @@ namespace LibraryReservationEngine.Web.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            await _bookService.CreateBookAsync(model.Title, model.ISBN, model.AuthorName, model.CategoryName);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _bookService.CreateBookAsync(model.Title, model.ISBN, model.AuthorName, model.CategoryName);
+                _logger.LogInformation("Book '{Title}' created successfully.", model.Title);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating book '{Title}'.", model.Title);
+                ModelState.AddModelError("", "An unexpected error occurred while creating the book.");
+                return View(model);
+            }
         }
 
         // GET /Book/Edit/5
@@ -81,13 +114,24 @@ namespace LibraryReservationEngine.Web.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var result = await _bookService.UpdateBookAsync(id, model.Title, model.ISBN, model.AuthorName, model.CategoryName);
-            if (!result.Success)
+            try
             {
-                ModelState.AddModelError("", result.Message ?? "Update failed");
+                var result = await _bookService.UpdateBookAsync(id, model.Title, model.ISBN, model.AuthorName, model.CategoryName);
+                if (!result.Success)
+                {
+                    _logger.LogWarning("Failed to update book {BookId}: {Reason}", id, result.Message);
+                    ModelState.AddModelError("", result.Message ?? "Update failed");
+                    return View(model);
+                }
+                _logger.LogInformation("Book {BookId} updated successfully.", id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating book {BookId}.", id);
+                ModelState.AddModelError("", "An unexpected error occurred while updating the book.");
                 return View(model);
             }
-            return RedirectToAction(nameof(Index));
         }
 
         // POST /Book/Delete/5
@@ -96,11 +140,25 @@ namespace LibraryReservationEngine.Web.Controllers
         [Authorize(Roles = "Librarian")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _bookService.DeleteBookAsync(id);
-            if (!result.Success)
+            try
             {
-                TempData["Error"] = result.Message;
+                var result = await _bookService.DeleteBookAsync(id);
+                if (!result.Success)
+                {
+                    _logger.LogWarning("Failed to delete book {BookId}: {Reason}", id, result.Message);
+                    TempData["Error"] = result.Message;
+                }
+                else
+                {
+                    _logger.LogInformation("Book {BookId} deleted.", id);
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting book {BookId}.", id);
+                TempData["Error"] = "An error occurred while deleting the book.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -111,20 +169,29 @@ namespace LibraryReservationEngine.Web.Controllers
             var book = await _bookService.GetBookDetailsAsync(id);
             if (book is null) return NotFound();
 
-            var history = await _bookService.GetBorrowHistoryAsync(id);
-            var models = history.Select(h => new BookBorrowHistoryViewModel
+            try
             {
-                StudentName = h.StudentName,
-                CopyCode = h.CopyCode,
-                IssuedAt = h.IssuedAt,
-                DueDate = h.DueDate,
-                ReturnedAt = h.ReturnedAt,
-                Status = h.Status
-            }).ToList();
+                var history = await _bookService.GetBorrowHistoryAsync(id);
+                var models = history.Select(h => new BookBorrowHistoryViewModel
+                {
+                    StudentName = h.StudentName,
+                    CopyCode = h.CopyCode,
+                    IssuedAt = h.IssuedAt,
+                    DueDate = h.DueDate,
+                    ReturnedAt = h.ReturnedAt,
+                    Status = h.Status
+                }).ToList();
 
-            ViewData["BookTitle"] = book.Title;
-            ViewData["BookId"] = id;
-            return View(models);
+                ViewData["BookTitle"] = book.Title;
+                ViewData["BookId"] = id;
+                return View(models);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching borrow history for book {BookId}.", id);
+                TempData["Error"] = "Unable to load borrow history.";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

@@ -17,16 +17,20 @@ namespace LibraryReservationEngine.Infrastructure.Services
         private const int HoldPeriodHours = 24;
         private const int MaxClaimRetries = 3;
 
+        private readonly Microsoft.Extensions.Logging.ILogger<ReservationService> _logger;
+
         public ReservationService(
             ApplicationDbContext context,
             IBookCopyService bookCopyService,
             IWaitlistService waitlistService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            Microsoft.Extensions.Logging.ILogger<ReservationService>? logger = null)
         {
             _context = context;
             _bookCopyService = bookCopyService;
             _waitlistService = waitlistService;
             _notificationService = notificationService;
+            _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ReservationService>.Instance;
         }
 
         public async Task<Result> CreateReservationAsync(string userId, int bookId)
@@ -192,6 +196,38 @@ namespace LibraryReservationEngine.Infrastructure.Services
                     ExpiresAt = r.ExpiresAt
                 })
                 .ToListAsync();
+        }
+
+        public async Task<int> ExpireOverdueReservationsAsync()
+        {
+            var now = DateTime.UtcNow;
+            var expiredReservations = await _context.Reservations
+                .Include(r => r.Book)
+                .Where(r => r.Status == ReservationStatus.Active && r.ExpiresAt.HasValue && r.ExpiresAt.Value <= now)
+                .ToListAsync();
+
+            foreach (var reservation in expiredReservations)
+            {
+                reservation.Status = ReservationStatus.Expired;
+                var copyId = reservation.BookCopyId;
+                var bookId = reservation.BookId;
+                var bookTitle = reservation.Book?.Title ?? "the book";
+
+                await _context.SaveChangesAsync();
+
+                await _notificationService.SendAsync(
+                    reservation.UserId,
+                    NotificationType.ReservationCancelled,
+                    $"Your reservation hold for '{bookTitle}' has expired and the copy has been released.");
+
+                if (copyId.HasValue)
+                {
+                    await _bookCopyService.MarkAsAvailableAsync(copyId.Value);
+                    await _waitlistService.PromoteNextInLineAsync(bookId);
+                }
+            }
+
+            return expiredReservations.Count;
         }
     }
 }

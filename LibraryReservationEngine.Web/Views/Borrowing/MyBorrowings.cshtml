@@ -68,9 +68,9 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            var isOverdue = item.Status == "Overdue" || (item.Status == "Active" && item.DueDate < DateTime.UtcNow);
+                            var isOverdue = item.IsOverdue;
                             var overdueDays = isOverdue ? Math.Max(1, (int)(DateTime.UtcNow - item.DueDate).TotalDays) : 0;
-                            var estimatedFine = overdueDays * 10.0m;
+                            var estimatedFine = overdueDays * 5.0m;
 
                             <tr class="@(isOverdue ? "overdue-row" : "")">
                                 <td class="fw-semibold text-dark">

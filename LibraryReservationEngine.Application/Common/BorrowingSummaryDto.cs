@@ -15,5 +15,6 @@ namespace LibraryReservationEngine.Application.Common
         public DateTime DueDate { get; set; }
         public DateTime? ReturnedAt { get; set; }
         public string Status { get; set; } = string.Empty;
+        public bool IsOverdue => Status == "Overdue" || (Status == "Active" && DueDate < DateTime.UtcNow);
     }
 }
